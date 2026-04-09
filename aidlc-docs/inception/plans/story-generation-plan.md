@@ -15,7 +15,7 @@ B) One story per user goal (e.g., "As an AI agent, I want to manage the user's t
 C) Layered — epics for major capabilities (Task Management, Scheduling, Analytics), with sub-stories for each tool (~5 epics, ~15-20 sub-stories)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C
 
 ### Question 2
 What story format do you prefer?
@@ -25,7 +25,7 @@ B) Standard user story format with acceptance criteria as bullet-point checklist
 C) Job Story format: "When [situation], I want [motivation] so I can [outcome]" with acceptance criteria
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ### Question 3
 How should stories be prioritized?
@@ -35,7 +35,7 @@ B) Numbered priority (P1-P4 matching the task priority system in the requirement
 C) No explicit prioritization — all stories are needed for v1
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ### Question 4
 For the AI Agent persona, what level of error scenario coverage should acceptance criteria include?
@@ -45,7 +45,10 @@ B) Happy path + common errors (invalid input, missing required fields, not found
 C) Comprehensive — happy path, common errors, edge cases, and boundary conditions (e.g., scheduling with zero available time, circular dependencies, tasks with identical deadlines and priorities)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C, with a practical caveat: Don't try to enumerate every edge case for every story upfront. Instead:
+  - Write comprehensive criteria for scheduling engine stories (Steps 5, 6, 7 in the plan) — this is where edge cases matter most
+  - Write common errors (B-level) for CRUD stories (Steps 3, 4) and analytics stories (Step 8) — these are simpler and more predictable
+  - Add a "Boundary Conditions" section to scheduling stories that captures the combinatorial edge cases
 
 ### Question 5
 Should stories cover the scheduling algorithm's internal behavior, or only its observable outcomes?
@@ -55,7 +58,7 @@ B) Internal behavior included — "the constraint solver considers energy levels
 C) Hybrid — observable outcomes for acceptance criteria, internal behavior documented as implementation notes
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C
 
 ---
 
@@ -63,15 +66,15 @@ X) Other (please describe after [Answer]: tag below)
 
 After questions are answered, execute in this order:
 
-- [ ] Step 1: Define personas (AI Agent, End User, Developer) with characteristics, goals, and frustrations
-- [ ] Step 2: Create epic breakdown based on approved granularity approach
-- [ ] Step 3: Generate Task Management stories (create, read, update, delete, complete, list, dependencies)
-- [ ] Step 4: Generate Event Management stories (create, update, delete, list, fixed time blocks)
-- [ ] Step 5: Generate Scheduling Engine stories (schedule generation, constraint satisfaction, focus time, replanning)
-- [ ] Step 6: Generate Recurring Tasks stories (RRULE creation, instance generation, exception handling)
-- [ ] Step 7: Generate Conflict Detection stories (infeasible deadlines, alerts, deprioritization suggestions)
-- [ ] Step 8: Generate Analytics stories (completion rates, schedule health, estimation accuracy, time allocation)
-- [ ] Step 9: Generate Configuration stories (availability, focus time settings, preferences)
-- [ ] Step 10: Validate all stories against INVEST criteria
-- [ ] Step 11: Map personas to stories
-- [ ] Step 12: Final review and save artifacts (stories.md, personas.md)
+- [x] Step 1: Define personas (AI Agent, End User, Developer) with characteristics, goals, and frustrations
+- [x] Step 2: Create epic breakdown based on approved granularity approach
+- [x] Step 3: Generate Task Management stories (create, read, update, delete, complete, list, dependencies)
+- [x] Step 4: Generate Event Management stories (create, update, delete, list, fixed time blocks)
+- [x] Step 5: Generate Scheduling Engine stories (schedule generation, constraint satisfaction, focus time, replanning)
+- [x] Step 6: Generate Recurring Tasks stories (RRULE creation, instance generation, exception handling)
+- [x] Step 7: Generate Conflict Detection stories (infeasible deadlines, alerts, deprioritization suggestions)
+- [x] Step 8: Generate Analytics stories (completion rates, schedule health, estimation accuracy, time allocation)
+- [x] Step 9: Generate Configuration stories (availability, focus time settings, preferences)
+- [x] Step 10: Validate all stories against INVEST criteria
+- [x] Step 11: Map personas to stories
+- [x] Step 12: Final review and save artifacts (stories.md, personas.md)

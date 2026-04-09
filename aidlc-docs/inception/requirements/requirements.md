@@ -73,6 +73,8 @@
 - **FR-9.5**: Analytics tools: `get_productivity_stats`, `get_schedule_health`, `get_time_allocation`, `get_estimation_accuracy`
 - **FR-9.6**: Configuration tools: `set_availability`, `set_focus_time`, `set_preferences`
 - **FR-9.7**: All tools return structured JSON responses with consistent error formats
+- **FR-9.8**: Background replan pattern — mutation tools (create/update/delete/complete, configuration changes) return immediately and trigger replan asynchronously; read tools (get_schedule, get_conflicts) return immediately with a `schedule_status` field ("up_to_date" or "replan_in_progress") and the last known schedule; the explicit `replan` tool is the only synchronous replan path
+- **FR-9.9**: Replan debouncing — rapid sequential mutations coalesce into a single replan rather than running multiple concurrent replans
 
 ---
 

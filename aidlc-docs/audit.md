@@ -70,3 +70,49 @@
 **Context**: INCEPTION - Requirements Analysis complete. Moving to User Stories.
 
 ---
+
+## User Stories - Planning Questions
+**Timestamp**: 2026-04-09T16:03:00Z
+**AI Response**: Created story-generation-plan.md with 5 planning questions covering granularity, format, prioritization, error coverage, and algorithm coverage. User requested elaboration on Q5, Q4, Q3, Q2 before answering.
+**Context**: INCEPTION - User Stories, Part 1 Planning.
+
+---
+
+## User Stories - User Elaboration Requests
+**Timestamp**: 2026-04-09T16:04:00Z
+**User Input**: Requested elaboration on Q5 (algorithm coverage), Q4 (error scenario depth), Q3 (story granularity), Q2 (story format) — each with pros/cons and recommendations.
+**AI Response**: Provided detailed pros/cons for each question. Recommended: Q5=C(hybrid), Q4=C(comprehensive with caveat), Q3=C(layered), Q2=A(Given/When/Then).
+**Context**: INCEPTION - User Stories, user due diligence before answering.
+
+---
+
+## User Stories - Answers Received
+**Timestamp**: 2026-04-09T16:10:00Z
+**User Input**: "Done, all questions answered, proceed"
+**AI Response**: Validated all 5 answers. No contradictions. Answers: Q1=C(layered epics), Q2=A(Given/When/Then), Q3=A(MoSCoW), Q4=C(comprehensive for scheduling, B-level for CRUD), Q5=C(hybrid). Proceeding to Part 2: Generation.
+**Context**: INCEPTION - User Stories, Part 1 complete. Beginning Part 2 generation.
+
+---
+
+## User Stories - Generation Complete
+**Timestamp**: 2026-04-09T16:15:00Z
+**AI Response**: Generated all story artifacts. 3 personas (Alex/AI Agent, Sam/End User, Jordan/Developer). 7 epics, 18 stories, 70+ acceptance criteria scenarios. Epics: Task Management (5 stories, B-level), Event Management (1 story, B-level), Scheduling Engine (3 stories, C-level), Recurring Tasks (2 stories, C-level), Conflict Detection (1 story, C-level), Analytics (4 stories, B-level), Configuration (3 stories, B-level). MoSCoW: 6 epics Must Have, 1 epic Should Have (Analytics). All plan steps marked complete. Awaiting user approval.
+**Context**: INCEPTION - User Stories, Part 2 Generation complete. All 12 steps in story-generation-plan.md marked [x].
+
+---
+
+## User Stories - Background Replan Pattern Update
+**Timestamp**: 2026-04-09T16:20:00Z
+**User Input**: "Should we add to the user stories the fact that the automatic replan should happen in the background? Example: in Story 1.1, after the agent request the creation of a new task, the MCP server should create the task with a unique ID, return the answer back to the agent immediately, and then trigger the replan. The same background execution behavior should be applied consistently in all applicable stories"
+**AI Response**: Agreed with the architectural change. Updated all affected stories (1.1, 1.2, 1.4, 1.5, 2.1, 3.1, 3.2, 4.1, 4.2, 5.1, 7.1, 7.2, 7.3) with background replan pattern. Added consistency guarantee: read tools (get_schedule, get_conflicts) block until pending replan completes. Added explicit replan tool as only synchronous path. Added replan debouncing for rapid mutations. Updated requirements FR-9.8 and FR-9.9.
+**Context**: INCEPTION - User Stories, architectural refinement. 14 stories updated, 2 new requirements added.
+
+---
+
+## User Stories - Non-blocking Read Pattern Update
+**Timestamp**: 2026-04-09T16:22:00Z
+**User Input**: "A call to get_schedule should not block, should return immediately with a message to the agent saying a replan is in progress, to the agent to try again later"
+**AI Response**: Updated get_schedule and get_conflicts to be non-blocking. Added `schedule_status` field ("up_to_date" / "replan_in_progress") to all read tool responses. When replan is in progress, returns last known schedule with status indicator and message. Updated Stories 3.1, 3.2, 5.1, header pattern description, and FR-9.8.
+**Context**: INCEPTION - User Stories, refinement to background replan pattern. Non-blocking everywhere — only explicit `replan` tool blocks.
+
+---
