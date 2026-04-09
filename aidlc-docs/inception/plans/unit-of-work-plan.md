@@ -41,7 +41,7 @@ X) Other (please describe after [Answer]: tag below)
 
 After questions are answered, execute in this order:
 
-- [ ] Step 1: Define unit inventory with scope, responsibilities, and implementation order
-- [ ] Step 2: Create dependency matrix between units
-- [ ] Step 3: Map user stories to units
-- [ ] Step 4: Validate all stories are covered and unit boundaries are clean
+- [x] Step 1: Define unit inventory with scope, responsibilities, and implementation order
+- [x] Step 2: Create dependency matrix between units
+- [x] Step 3: Map user stories to units
+- [x] Step 4: Validate all stories are covered and unit boundaries are clean
