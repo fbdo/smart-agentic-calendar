@@ -37,7 +37,7 @@
 - [x] Units Generation - EXECUTE
 
 ### CONSTRUCTION PHASE (per unit)
-- [ ] Functional Design - EXECUTE (per unit)
+- [ ] Functional Design - EXECUTE (Unit 1: Foundation — in progress)
 - [ ] NFR Requirements - SKIP
 - [ ] NFR Design - SKIP
 - [ ] Infrastructure Design - SKIP
@@ -51,4 +51,4 @@
 - **Lifecycle Phase**: INCEPTION
 - **Current Stage**: Units Generation Complete
 - **Next Stage**: CONSTRUCTION PHASE — Functional Design (Unit 1: Foundation)
-- **Status**: Awaiting user approval of units generation
+- **Status**: Functional Design for Unit 1: Foundation — awaiting question answers
