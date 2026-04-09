@@ -176,3 +176,11 @@
 **Context**: INCEPTION - Units Generation, Part 2 Generation complete. 5 units, bottom-up order, no circular dependencies, all stories covered.
 
 ---
+
+## Units Generation - TDD and Testing Requirements
+**Timestamp**: 2026-04-09T16:58:00Z
+**User Input**: "I want to make sure we not only implement property testing as deisgned, but we follow test-driven development, with a red-green-refactor for simplicity cycle, and a healthy test pyramid. And a design using dependency injection to support testability"
+**AI Response**: Acknowledged. DI already designed (Application Design Q2 — constructor injection). PBT partial already configured. Added NFR-4.4 (TDD red-green-refactor), NFR-4.5 (test pyramid), NFR-4.6 (DI for testability) to requirements.md. Saved as feedback memory for construction phase enforcement.
+**Context**: INCEPTION - Units Generation, user adding development methodology requirements before approval.
+
+---

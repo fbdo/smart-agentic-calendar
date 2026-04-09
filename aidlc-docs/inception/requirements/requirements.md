@@ -99,6 +99,9 @@
 - **NFR-4.1**: TypeScript with strict type checking
 - **NFR-4.2**: Clear separation: storage layer, scheduling engine, MCP server layer
 - **NFR-4.3**: Property-based tests for pure scheduling functions and serialization round-trips
+- **NFR-4.4**: Test-driven development (TDD) — red-green-refactor cycle for all production code
+- **NFR-4.5**: Test pyramid — many unit tests, fewer integration tests, minimal end-to-end tests
+- **NFR-4.6**: Dependency injection via constructor parameters to support testability (components receive dependencies explicitly, enabling mock/stub injection in tests)
 
 ### NFR-5: Usability (MCP Interface)
 - **NFR-5.1**: Tool descriptions are clear enough for AI agents to use without documentation
