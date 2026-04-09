@@ -53,8 +53,8 @@ X) Other (please describe after [Answer]: tag below)
 
 After questions are answered, execute in this order:
 
-- [ ] Step 1: Define domain entities — all TypeScript interfaces/types for models layer
-- [ ] Step 2: Define business rules — validation rules, constraints, and invariants for each entity
-- [ ] Step 3: Define database schema — SQLite table definitions, indexes, and migration strategy
-- [ ] Step 4: Define shared utilities — ID generation, time utilities, constants, error types
-- [ ] Step 5: Validate completeness — ensure all fields referenced in stories and component-methods.md are covered
+- [x] Step 1: Define domain entities — all TypeScript interfaces/types for models layer
+- [x] Step 2: Define business rules — validation rules, constraints, and invariants for each entity
+- [x] Step 3: Define database schema — SQLite table definitions, indexes, and migration strategy
+- [x] Step 4: Define shared utilities — ID generation, time utilities, constants, error types
+- [x] Step 5: Validate completeness — ensure all fields referenced in stories and component-methods.md are covered
