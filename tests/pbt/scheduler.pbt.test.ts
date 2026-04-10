@@ -9,6 +9,7 @@ import {
 import type { Task } from "../../src/models/task.js";
 import type { FocusTime } from "../../src/models/config.js";
 import type { Availability } from "../../src/models/config.js";
+import type { TimeBlock } from "../../src/models/schedule.js";
 
 function makeTask(id: string, duration: number, priority: "P1" | "P2" | "P3" | "P4" = "P3"): Task {
   return {
@@ -51,6 +52,44 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+function consumeSlot(slots: AvailableSlot[], block: TimeBlock): void {
+  const start = new Date(block.startTime).getTime();
+  const end = new Date(block.endTime).getTime();
+
+  for (let j = slots.length - 1; j >= 0; j--) {
+    const slot = slots[j];
+    const slotStart = new Date(slot.startTime).getTime();
+    const slotEnd = new Date(slot.endTime).getTime();
+    if (start < slotEnd && end > slotStart) {
+      slots.splice(j, 1);
+      if (start > slotStart) {
+        slots.push({
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: block.startTime,
+          durationMinutes: (start - slotStart) / 60_000,
+        });
+      }
+      if (end < slotEnd) {
+        slots.push({
+          date: slot.date,
+          startTime: block.endTime,
+          endTime: slot.endTime,
+          durationMinutes: (slotEnd - end) / 60_000,
+        });
+      }
+    }
+  }
+}
+
+function verifyNoOverlaps(blocks: { start: number; end: number }[]): void {
+  for (let i = 0; i < blocks.length; i++) {
+    for (let j = i + 1; j < blocks.length; j++) {
+      expect(blocks[i].start < blocks[j].end && blocks[i].end > blocks[j].start).toBe(false);
+    }
+  }
+}
+
 describe("Scheduler PBT", () => {
   describe("no two time blocks overlap", () => {
     const seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -63,57 +102,24 @@ describe("Scheduler PBT", () => {
           makeSlot("2026-04-13", "13:00", "17:00"),
         ];
 
-        // Place multiple tasks
         const allBlocks: { start: number; end: number }[] = [];
         const remainingSlots = [...slots];
 
         for (let i = 0; i < 5; i++) {
-          const duration = Math.floor(rand() * 90) + 30; // 30-120 min
+          const duration = Math.floor(rand() * 90) + 30;
           const task = makeTask(`t${i}`, duration);
           const result = placeTask(task, remainingSlots, [], now, noFocus, null, 15, 30, 60);
 
           for (const block of result.blocks) {
-            const start = new Date(block.startTime).getTime();
-            const end = new Date(block.endTime).getTime();
-            allBlocks.push({ start, end });
-
-            // Consume slot space manually
-            for (let j = remainingSlots.length - 1; j >= 0; j--) {
-              const slot = remainingSlots[j];
-              const slotStart = new Date(slot.startTime).getTime();
-              const slotEnd = new Date(slot.endTime).getTime();
-              if (start < slotEnd && end > slotStart) {
-                remainingSlots.splice(j, 1);
-                if (start > slotStart) {
-                  remainingSlots.push({
-                    date: slot.date,
-                    startTime: slot.startTime,
-                    endTime: block.startTime,
-                    durationMinutes: (start - slotStart) / 60_000,
-                  });
-                }
-                if (end < slotEnd) {
-                  remainingSlots.push({
-                    date: slot.date,
-                    startTime: block.endTime,
-                    endTime: slot.endTime,
-                    durationMinutes: (slotEnd - end) / 60_000,
-                  });
-                }
-              }
-            }
+            allBlocks.push({
+              start: new Date(block.startTime).getTime(),
+              end: new Date(block.endTime).getTime(),
+            });
+            consumeSlot(remainingSlots, block);
           }
         }
 
-        // Verify no overlaps
-        for (let i = 0; i < allBlocks.length; i++) {
-          for (let j = i + 1; j < allBlocks.length; j++) {
-            const a = allBlocks[i];
-            const b = allBlocks[j];
-            const overlaps = a.start < b.end && a.end > b.start;
-            expect(overlaps).toBe(false);
-          }
-        }
+        verifyNoOverlaps(allBlocks);
       });
     }
   });

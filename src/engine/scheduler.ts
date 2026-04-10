@@ -371,6 +371,19 @@ export class Scheduler {
 
 // --- Task placement ---
 
+function adjustForTrailingBlock(
+  blockDuration: number,
+  remainingMinutes: number,
+  minimumBlockMinutes: number,
+): number {
+  const leftover = remainingMinutes - blockDuration;
+  if (leftover > 0 && leftover < minimumBlockMinutes) {
+    const adjusted = remainingMinutes - minimumBlockMinutes;
+    return adjusted >= minimumBlockMinutes ? adjusted : remainingMinutes;
+  }
+  return blockDuration;
+}
+
 export function placeTask(
   task: Task,
   availableSlots: AvailableSlot[],
@@ -409,22 +422,12 @@ export function placeTask(
       }
     }
 
-    let blockDuration = Math.min(remainingMinutes, slot.durationMinutes);
-
-    // Handle trailing block: if remaining after this would be below minimum
-    if (
-      remainingMinutes - blockDuration > 0 &&
-      remainingMinutes - blockDuration < minimumBlockMinutes
-    ) {
-      // Reduce this block to leave enough for a minimum-sized final block
-      const adjustedDuration = remainingMinutes - minimumBlockMinutes;
-      if (adjustedDuration >= minimumBlockMinutes) {
-        blockDuration = adjustedDuration;
-      } else {
-        // Can't split — assign all remaining to this block
-        blockDuration = remainingMinutes;
-      }
-    }
+    const rawDuration = Math.min(remainingMinutes, slot.durationMinutes);
+    const blockDuration = adjustForTrailingBlock(
+      rawDuration,
+      remainingMinutes,
+      minimumBlockMinutes,
+    );
 
     blocks.push({
       id: generateId(),
@@ -477,6 +480,19 @@ interface Blocker {
   end: string;
 }
 
+function clipToWindow(
+  start: string,
+  end: string,
+  windowStart: string,
+  windowEnd: string,
+): Blocker | null {
+  if (start >= windowEnd || end <= windowStart) return null;
+  return {
+    start: start < windowStart ? windowStart : start,
+    end: end > windowEnd ? windowEnd : end,
+  };
+}
+
 function collectBlockers(
   _dateStr: string,
   windowStart: string,
@@ -487,30 +503,17 @@ function collectBlockers(
   const blockers: Blocker[] = [];
 
   for (const event of events) {
-    if (event.isAllDay) continue; // handled at day level
-    if (!event.startTime || !event.endTime) continue;
-
-    // Check if event overlaps with this window
-    if (event.startTime < windowEnd && event.endTime > windowStart) {
-      blockers.push({
-        start: event.startTime < windowStart ? windowStart : event.startTime,
-        end: event.endTime > windowEnd ? windowEnd : event.endTime,
-      });
-    }
+    if (event.isAllDay || !event.startTime || !event.endTime) continue;
+    const clipped = clipToWindow(event.startTime, event.endTime, windowStart, windowEnd);
+    if (clipped) blockers.push(clipped);
   }
 
   for (const block of pinnedBlocks) {
-    if (block.startTime < windowEnd && block.endTime > windowStart) {
-      blockers.push({
-        start: block.startTime < windowStart ? windowStart : block.startTime,
-        end: block.endTime > windowEnd ? windowEnd : block.endTime,
-      });
-    }
+    const clipped = clipToWindow(block.startTime, block.endTime, windowStart, windowEnd);
+    if (clipped) blockers.push(clipped);
   }
 
-  // Sort blockers by start time
   blockers.sort((a, b) => a.start.localeCompare(b.start));
-
   return blockers;
 }
 
@@ -538,6 +541,43 @@ function subtractBlockers(
   return freeSlots;
 }
 
+function splitSlotAroundBlock(
+  slot: AvailableSlot,
+  blockStart: number,
+  blockEnd: number,
+  blockStartTime: string,
+  blockEndTime: string,
+): AvailableSlot[] {
+  const slotStart = new Date(slot.startTime).getTime();
+  const slotEnd = new Date(slot.endTime).getTime();
+  const remaining: AvailableSlot[] = [];
+
+  if (blockStart > slotStart) {
+    const beforeDuration = (blockStart - slotStart) / 60_000;
+    if (beforeDuration > 0) {
+      remaining.push({
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: blockStartTime,
+        durationMinutes: beforeDuration,
+      });
+    }
+  }
+  if (blockEnd < slotEnd) {
+    const afterDuration = (slotEnd - blockEnd) / 60_000;
+    if (afterDuration > 0) {
+      remaining.push({
+        date: slot.date,
+        startTime: blockEndTime,
+        endTime: slot.endTime,
+        durationMinutes: afterDuration,
+      });
+    }
+  }
+
+  return remaining;
+}
+
 function consumeSlotSpace(slots: AvailableSlot[], block: TimeBlock): void {
   const blockStart = new Date(block.startTime).getTime();
   const blockEnd = new Date(block.endTime).getTime();
@@ -548,31 +588,16 @@ function consumeSlotSpace(slots: AvailableSlot[], block: TimeBlock): void {
     const slotEnd = new Date(slot.endTime).getTime();
 
     if (blockStart < slotEnd && blockEnd > slotStart) {
-      // Block overlaps with this slot — split or remove
       slots.splice(i, 1);
-
-      // Add remaining portions
-      if (blockStart > slotStart) {
-        const beforeDuration = (blockStart - slotStart) / 60_000;
-        if (beforeDuration > 0) {
-          slots.push({
-            date: slot.date,
-            startTime: slot.startTime,
-            endTime: block.startTime,
-            durationMinutes: beforeDuration,
-          });
-        }
-      }
-      if (blockEnd < slotEnd) {
-        const afterDuration = (slotEnd - blockEnd) / 60_000;
-        if (afterDuration > 0) {
-          slots.push({
-            date: slot.date,
-            startTime: block.endTime,
-            endTime: slot.endTime,
-            durationMinutes: afterDuration,
-          });
-        }
+      const remaining = splitSlotAroundBlock(
+        slot,
+        blockStart,
+        blockEnd,
+        block.startTime,
+        block.endTime,
+      );
+      for (const r of remaining) {
+        slots.push(r);
       }
     }
   }

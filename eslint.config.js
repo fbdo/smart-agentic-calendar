@@ -19,7 +19,7 @@ export default tseslint.config(
     rules: {
       // SonarQube-equivalent rules via sonarjs plugin are enabled by default.
       // Adjust severity or disable specific rules as needed:
-      "sonarjs/cognitive-complexity": ["warn", 15],
+      "sonarjs/cognitive-complexity": ["error", 15],
       "sonarjs/no-duplicate-string": ["warn", { threshold: 3 }],
 
       // TypeScript strict additions

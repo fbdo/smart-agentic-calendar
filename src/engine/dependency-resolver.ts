@@ -25,6 +25,55 @@ function taskSortKey(task: Task): [number, number, number] {
   return [priority, deadline, task.duration];
 }
 
+function compareTasks(a: Task, b: Task): number {
+  const [ap, ad, adur] = taskSortKey(a);
+  const [bp, bd, bdur] = taskSortKey(b);
+  return ap - bp || ad - bd || adur - bdur;
+}
+
+function buildInDegreeAndQueue(
+  tasks: Task[],
+  dependencies: DependencyEdge[],
+  taskMap: Map<string, Task>,
+): { inDegree: Map<string, number>; queue: Task[] } {
+  const inDegree = new Map<string, number>();
+  for (const task of tasks) {
+    inDegree.set(task.id, 0);
+  }
+  for (const edge of dependencies) {
+    if (taskMap.has(edge.taskId)) {
+      inDegree.set(edge.taskId, (inDegree.get(edge.taskId) ?? 0) + 1);
+    }
+  }
+
+  const queue: Task[] = [];
+  for (const task of tasks) {
+    if ((inDegree.get(task.id) ?? 0) === 0) {
+      queue.push(task);
+    }
+  }
+  queue.sort(compareTasks);
+
+  return { inDegree, queue };
+}
+
+function insertSorted(queue: Task[], task: Task): void {
+  const key = taskSortKey(task);
+  let insertIdx = queue.length;
+  for (let i = 0; i < queue.length; i++) {
+    const qKey = taskSortKey(queue[i]);
+    if (
+      key[0] < qKey[0] ||
+      (key[0] === qKey[0] && key[1] < qKey[1]) ||
+      (key[0] === qKey[0] && key[1] === qKey[1] && key[2] < qKey[2])
+    ) {
+      insertIdx = i;
+      break;
+    }
+  }
+  queue.splice(insertIdx, 0, task);
+}
+
 export class DependencyResolver {
   validateNoCycles(taskId: string, dependsOnId: string, existingDeps: DependencyEdge[]): boolean {
     if (taskId === dependsOnId) {
@@ -89,31 +138,8 @@ export class DependencyResolver {
       taskMap.set(task.id, task);
     }
 
-    // Build in-degree count and adjacency (dependsOnId → [taskIds that depend on it])
-    const inDegree = new Map<string, number>();
     const adj = buildAdjacencyMap(dependencies);
-
-    for (const task of tasks) {
-      inDegree.set(task.id, 0);
-    }
-    for (const edge of dependencies) {
-      if (taskMap.has(edge.taskId)) {
-        inDegree.set(edge.taskId, (inDegree.get(edge.taskId) ?? 0) + 1);
-      }
-    }
-
-    // Collect zero-in-degree tasks, sorted by priority/deadline/duration
-    const queue: Task[] = [];
-    for (const task of tasks) {
-      if ((inDegree.get(task.id) ?? 0) === 0) {
-        queue.push(task);
-      }
-    }
-    queue.sort((a, b) => {
-      const [ap, ad, adur] = taskSortKey(a);
-      const [bp, bd, bdur] = taskSortKey(b);
-      return ap - bp || ad - bd || adur - bdur;
-    });
+    const { inDegree, queue } = buildInDegreeAndQueue(tasks, dependencies, taskMap);
 
     const result: Task[] = [];
 
@@ -121,41 +147,13 @@ export class DependencyResolver {
       const node = queue.shift()!;
       result.push(node);
 
-      const dependents = adj.get(node.id) ?? [];
-      const newlyReady: Task[] = [];
-
-      for (const depId of dependents) {
+      for (const depId of adj.get(node.id) ?? []) {
         if (!taskMap.has(depId)) continue;
         const newDegree = (inDegree.get(depId) ?? 1) - 1;
         inDegree.set(depId, newDegree);
         if (newDegree === 0) {
-          newlyReady.push(taskMap.get(depId)!);
+          insertSorted(queue, taskMap.get(depId)!);
         }
-      }
-
-      // Insert newly ready tasks in sorted order
-      newlyReady.sort((a, b) => {
-        const [ap, ad, adur] = taskSortKey(a);
-        const [bp, bd, bdur] = taskSortKey(b);
-        return ap - bp || ad - bd || adur - bdur;
-      });
-
-      for (const task of newlyReady) {
-        // Insert into queue maintaining sort order
-        const key = taskSortKey(task);
-        let insertIdx = queue.length;
-        for (let i = 0; i < queue.length; i++) {
-          const qKey = taskSortKey(queue[i]);
-          if (
-            key[0] < qKey[0] ||
-            (key[0] === qKey[0] && key[1] < qKey[1]) ||
-            (key[0] === qKey[0] && key[1] === qKey[1] && key[2] < qKey[2])
-          ) {
-            insertIdx = i;
-            break;
-          }
-        }
-        queue.splice(insertIdx, 0, task);
       }
     }
 
