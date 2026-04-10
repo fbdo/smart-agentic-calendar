@@ -290,3 +290,57 @@
 **Context**: CONSTRUCTION - Code Generation, Part 2 Generation complete for Unit 2: Storage.
 
 ---
+
+## Functional Design (Unit 3: Scheduling Engine) - Start
+**Timestamp**: 2026-04-10T14:00:00Z
+**User Input**: "proceed"
+**AI Response**: Loaded all context: unit-of-work.md, unit-of-work-story-map.md, component-methods.md, components.md, services.md, requirements.md, stories.md, all model types, existing storage layer code. Created functional design plan with 9 steps and 8 clarification questions at aidlc-docs/construction/plans/scheduling-engine-functional-design-plan.md. Questions cover: constraint solver strategy, task splitting, schedule stability, energy preferences, focus-time tag identification, recurrence horizon expansion, cycle detection algorithm, and deprioritization suggestion strategy.
+**Context**: CONSTRUCTION - Functional Design, Unit 3: Scheduling Engine. Steps 1-4 (Analyze Unit Context, Create Plan, Generate Questions, Store Plan) complete. Awaiting user answers.
+
+---
+
+## Functional Design (Unit 3: Scheduling Engine) - Elaboration Requests
+**Timestamp**: 2026-04-10T14:10:00Z
+**User Input**: Requested elaboration on Q1 (soft constraint evaluation), Q2 (task splitting), Q3 (schedule stability), Q4 (energy matching), Q6 (recurrence expansion), Q7 (cycle detection algorithm), Q8 (deprioritization suggestions) — each with pros/cons and recommendations.
+**AI Response**: Provided detailed pros/cons for each question. Recommended: Q1=A (weighted scoring), Q2=C (hybrid fill+minimum), Q3=C (pin completed/in-progress), Q4=C (skip energy in v1), Q5=B (tag-based), Q6=A (on every replan), Q7=C (DFS+Kahn's), Q8=A (greedy by priority).
+**Context**: CONSTRUCTION - Functional Design, user due diligence before answering.
+
+---
+
+## Functional Design (Unit 3: Scheduling Engine) - Answers Received
+**Timestamp**: 2026-04-10T14:30:00Z
+**User Input**: "all questions answered, proceed"
+**AI Response**: Validated all 8 answers. No contradictions found. Answers: Q1=A (weighted scoring), Q2=C (hybrid), Q3=C (pin completed/in-progress), Q4=B (tag-based energy — diverged from recommendation of C), Q5=B (tag-based focus), Q6=A (on every replan), Q7=C (DFS+Kahn's), Q8=A (greedy by priority). Generated 3 functional design artifacts: business-logic-model.md (scheduler algorithm, dependency resolver, conflict detector, replan coordinator, recurrence manager), business-rules.md (38 business rules across 7 categories: SR, FT, EM, DR, CD, RC, RR), domain-entities.md (internal entities: AvailableSlot, SlotScore, TaskPlacement, AdjacencyMap, InDegreeMap, CompetingTask, ReplanState, tag configuration). All 9 plan steps marked complete. Awaiting user approval.
+**Context**: CONSTRUCTION - Functional Design, Unit 3: Scheduling Engine. All steps complete. Artifacts at aidlc-docs/construction/scheduling-engine/functional-design/.
+
+---
+
+## Functional Design (Unit 3: Scheduling Engine) - Approval
+**Timestamp**: 2026-04-10T14:35:00Z
+**User Input**: "approved, continue"
+**AI Response**: Functional design approved. Proceeding to Code Generation Part 1 (Planning) for Unit 3: Scheduling Engine.
+**Context**: CONSTRUCTION - Functional Design complete for Unit 3. Transitioning to Code Generation.
+
+---
+
+## Code Generation (Unit 3: Scheduling Engine) - Planning
+**Timestamp**: 2026-04-10T14:40:00Z
+**AI Response**: Created 9-step code generation plan at aidlc-docs/construction/plans/scheduling-engine-code-generation-plan.md. Steps: (1) install rrule + barrel export, (2) DependencyResolver TDD, (3) ConflictDetector TDD, (4) Scheduler availability map + scoring TDD, (5) Scheduler placement + generation TDD, (6) ReplanCoordinator TDD, (7) RecurrenceManager TDD, (8) integration verification, (9) code summary. Estimated: 6 source files, 6-7 test files, ~120-160 tests. Story coverage: 3.1, 3.2, 3.3, 4.1, 4.2, 5.1, 1.4. PBT tests for scheduling invariants and dependency graph properties. Awaiting user approval.
+**Context**: CONSTRUCTION - Code Generation, Part 1 Planning for Unit 3: Scheduling Engine.
+
+---
+
+## Code Generation (Unit 3: Scheduling Engine) - Plan Approved
+**Timestamp**: 2026-04-10T14:45:00Z
+**User Input**: "approved, proceed"
+**AI Response**: Plan approved. Proceeding to Code Generation Part 2: Generation for Unit 3: Scheduling Engine.
+**Context**: CONSTRUCTION - Code Generation, Part 1 Planning complete. 9-step plan approved. Beginning Part 2 execution.
+
+---
+
+## Code Generation (Unit 3: Scheduling Engine) - Generation Complete
+**Timestamp**: 2026-04-10T15:22:00Z
+**AI Response**: All 9 steps executed. 6 source files (dependency-resolver.ts, conflict-detector.ts, scheduler.ts, replan-coordinator.ts, recurrence-manager.ts, index.ts barrel), 8 test files (6 unit + 2 PBT). Unit 3 tests: 145 (97 unit + 48 PBT). Full suite: 349 tests passing across 26 test files, 0 regressions. TypeScript compilation clean. Lint clean. TDD red-green-refactor applied throughout. All stories covered: 1.4, 3.1, 3.2, 3.3, 4.1, 4.2, 5.1. Awaiting user approval.
+**Context**: CONSTRUCTION - Code Generation, Part 2 Generation complete for Unit 3: Scheduling Engine.
+
+---
