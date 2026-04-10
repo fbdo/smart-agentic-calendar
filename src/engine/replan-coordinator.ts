@@ -93,7 +93,18 @@ export class ReplanCoordinator {
       this.scheduleRepo.clearSchedule();
       this.scheduleRepo.saveSchedule(result.timeBlocks);
 
-      // Step 4: Update task statuses
+      // Step 4: Update task statuses — mark scheduled tasks
+      const scheduledTaskIds = new Set(result.timeBlocks.map((b) => b.taskId));
+      const atRiskIds = new Set(result.atRiskTasks.map((a) => a.taskId));
+
+      for (const taskId of scheduledTaskIds) {
+        if (atRiskIds.has(taskId)) continue; // at_risk takes precedence
+        const task = this.taskRepo.findById(taskId);
+        if (task && (task.status === "pending" || task.status === "at_risk")) {
+          this.taskRepo.updateStatus(taskId, "scheduled");
+        }
+      }
+
       for (const atRisk of result.atRiskTasks) {
         const task = this.taskRepo.findById(atRisk.taskId);
         if (task && task.status !== "completed" && task.status !== "cancelled") {

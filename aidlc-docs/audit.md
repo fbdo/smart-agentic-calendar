@@ -1,5 +1,29 @@
 # AI-DLC Audit Log
 
+## Functional Design — Unit 5: MCP Server
+**Timestamp**: 2026-04-10T10:00:00Z
+**User Input**: "Proceed with the Functions design of Unit 5"
+**AI Response**: Starting Functional Design for Unit 5: MCP Server. Loading context from prior units, application design, component methods, services, and user stories. Creating functional design plan with clarification questions.
+**Context**: CONSTRUCTION — Functional Design, Unit 5: MCP Server
+
+---
+
+## Functional Design — Unit 5: MCP Server — Clarification Answers
+**Timestamp**: 2026-04-10T10:15:00Z
+**User Input**: "Done, answered all questions on file"
+**AI Response**: User answered Q1: A (MCP protocol error with isError: true), Q2: A (agent-provided actual_duration_minutes, defaults to estimated), Q3: A (snake_case for MCP parameters), Q4: A (enriched schedule response with title, priority, category, status). Proceeding with functional design document generation.
+**Context**: CONSTRUCTION — Functional Design, Unit 5: MCP Server — Questions answered
+
+---
+
+## Code Generation — Unit 5: MCP Server — Plan
+**Timestamp**: 2026-04-10T10:30:00Z
+**User Input**: "continue to the next stage"
+**AI Response**: User approved functional design. Proceeding to Code Generation for Unit 5: MCP Server. Creating code generation plan.
+**Context**: CONSTRUCTION — Code Generation, Unit 5: MCP Server
+
+---
+
 ## Workspace Detection
 **Timestamp**: 2026-04-09T15:52:00Z
 **User Input**: "Using AI-DLC, I want to create a local first smart calendar MCP server, for AI agents, in the same way as application like https://reclaim.ai/ and https://www.usemotion.com/features/ai-calendar. It should automatically re-plan tasks, recalculate the schedule, helping the agent become a personal assistant. It should plan tasks based on deadlines, durations, and priorities."
@@ -443,5 +467,35 @@
 **Timestamp**: 2026-04-10T19:52:00Z
 **AI Response**: All 7 steps complete. Generated 7 source files (519 lines) and 6 test files (1078 lines) with 62 tests. Full suite: 413 tests, 0 regressions. Steps: (1) period.ts + barrel — 13 tests, (2) ProductivityCalculator — 7 tests, (3) HealthCalculator — 16 tests, (4) EstimationCalculator — 12 tests, (5) AllocationCalculator — 6 tests, (6) AnalyticsEngine — 8 tests, (7) code-summary.md. All stories 6.1-6.4 implemented and tested.
 **Context**: CONSTRUCTION - Code Generation Part 2 (Generation) complete, Unit 4: Analytics. Presenting completion message.
+
+---
+
+## Code Generation (Unit 5: MCP Server) — Plan Approved
+**Timestamp**: 2026-04-10T20:00:00Z
+**User Input**: "using AI-DLC, approve code generation and proceed"
+**AI Response**: Plan approved. Proceeding to Code Generation Part 2: Generation for Unit 5: MCP Server. 11-step plan with validators, 5 tool handler classes, McpServer, composition root.
+**Context**: CONSTRUCTION — Code Generation, Part 1 Planning complete. Beginning Part 2 execution.
+
+---
+
+## Build and Test — Start
+**Timestamp**: 2026-04-10T21:00:00Z
+**User Input**: "continue to build and test"
+**AI Response**: User approved Code Generation for Unit 5. Proceeding to Build and Test stage.
+**Context**: CONSTRUCTION — All 5 units complete. Transitioning to Build and Test stage.
+
+---
+
+## Code Generation (Unit 5: MCP Server) — Complete
+**Timestamp**: 2026-04-10T20:55:00Z
+**AI Response**: All 11 steps executed. 9 source files (1,718 lines) and 8 test files (1,826 lines) with 123 tests. Full suite: 536 tests across 40 files, 0 regressions. TypeScript compilation clean (only pre-existing health.ts errors). TDD red-green-refactor applied throughout. Steps: (1) MCP SDK install + directory, (2) validators — 62 tests, (3) TaskTools — 20 tests, (4) EventTools — 8 tests, (5) ScheduleTools — 11 tests, (6) AnalyticsTools — 8 tests, (7) ConfigTools — 4 tests, (8) McpServer — 6 tests, (9) Composition root — 4 tests, (10) Full suite verification, (11) code-summary.md. All 17 stories covered. External dependency: @modelcontextprotocol/sdk.
+**Context**: CONSTRUCTION — Code Generation, Part 2 Generation complete for Unit 5: MCP Server.
+
+---
+
+## Build and Test — Complete
+**Timestamp**: 2026-04-10T21:10:00Z
+**AI Response**: Created 5 instruction files in aidlc-docs/construction/build-and-test/: (1) build-instructions.md — prerequisites, build steps (npm install → tsc), quality checks (lint, format, duplication, unused, deps, security), env vars (CALENDAR_DB_PATH), known issues (health.ts type error); (2) unit-test-instructions.md — full inventory of 536 tests across 40 files organized by unit, run commands per unit; (3) integration-test-instructions.md — 5 recommended test suites (~25-30 tests): MCP→Storage round-trip, scheduling pipeline, conflict detection, recurring tasks, analytics pipeline; (4) performance-test-instructions.md — 3 test suites (~15-17 tests) for NFR-1 compliance: replan latency (50/100/200 tasks), CRUD response time, database query plans; (5) build-and-test-summary.md — project overview, build pipeline, source/test summaries, NFR compliance matrix, known issues. Updated aidlc-state.md: Build and Test marked complete.
+**Context**: CONSTRUCTION — Build and Test stage complete. All instruction files generated.
 
 ---

@@ -305,9 +305,10 @@ export class Scheduler {
     const blockedIds = new Set(blockedTasks.map((t) => t.id));
     const schedulableTasks = pendingTasks.filter((t) => !blockedIds.has(t.id));
 
+    const schedulableIds = new Set(schedulableTasks.map((t) => t.id));
     const orderedTasks = this.dependencyResolver.topologicalSort(
       schedulableTasks,
-      dependencies.filter((d) => !blockedIds.has(d.taskId) && !blockedIds.has(d.dependsOnId)),
+      dependencies.filter((d) => schedulableIds.has(d.taskId) && schedulableIds.has(d.dependsOnId)),
     );
 
     // 4. Place each task
