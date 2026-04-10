@@ -1,0 +1,58 @@
+{
+  "name": "smart-agentic-calendar",
+  "version": "0.1.0",
+  "description": "Local-first smart calendar MCP server for AI agents with automatic task replanning",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"**/*.{ts,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,json}\"",
+    "quality:duplication": "jscpd src/ --config .jscpd.json",
+    "quality:unused": "knip --config knip.config.ts",
+    "quality:deps": "depcruise src/ --config .dependency-cruiser.cjs --output-type err",
+    "quality:security": "grype dir:. --only-fixed --fail-on high",
+    "quality": "npm run lint && npm run format:check && npm run quality:duplication && npm run quality:unused && npm run quality:deps && npm run quality:security",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.5.2",
+    "@types/uuid": "^10.0.0",
+    "dependency-cruiser": "^17.3.10",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-sonarjs": "^4.0.2",
+    "husky": "^9.1.7",
+    "jscpd": "^4.0.8",
+    "knip": "^6.3.1",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.2",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.1",
+    "vitest": "^4.1.4"
+  }
+}

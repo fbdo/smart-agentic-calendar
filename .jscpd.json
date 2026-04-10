@@ -1,0 +1,14 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "ignore": [
+    "node_modules/**",
+    "dist/**",
+    "aidlc-docs/**",
+    "coverage/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "absolute": false,
+  "gitignore": true
+}

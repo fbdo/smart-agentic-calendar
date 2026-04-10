@@ -1,0 +1,6 @@
+dist/
+node_modules/
+aidlc-docs/
+aidlc-rule-details
+coverage/
+*.md
