@@ -13,8 +13,8 @@ export interface ScheduleHealth {
   overdueCount: number;
   atRiskCount: number;
   freeHoursThisWeek: number;
-  busiestDay: string;
-  lightestDay: string;
+  busiestDay: string | null;
+  lightestDay: string | null;
 }
 
 export interface EstimationAccuracy {

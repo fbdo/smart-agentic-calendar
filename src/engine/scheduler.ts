@@ -22,7 +22,7 @@ export interface AvailableSlot {
   durationMinutes: number;
 }
 
-export interface SlotScore {
+interface SlotScore {
   slot: AvailableSlot;
   totalScore: number;
   breakdown: {
@@ -34,7 +34,7 @@ export interface SlotScore {
   };
 }
 
-export interface EnergyConfig {
+interface EnergyConfig {
   peakEnergyStart: string;
   peakEnergyEnd: string;
   lowEnergyStart: string;

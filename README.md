@@ -21,8 +21,10 @@ src/
   models/       Domain types (Task, Event, TimeBlock, Config, etc.)
   common/       Shared utilities (ID generation, time functions, constants)
   storage/      SQLite database layer (better-sqlite3)
-  services/     Business logic and orchestration (Units 2-4)
-  mcp/          MCP server and tool handlers (Unit 5)
+  engine/       Scheduling engine, replanning, conflict detection, recurrence
+  analytics/    Productivity stats, schedule health, estimation accuracy
+  mcp/          MCP server and tool handlers
+  index.ts      Composition root and entry point
 ```
 
 Single-user, single-process, local-first. All data stored in a local SQLite database with no external service dependencies.
@@ -37,6 +39,113 @@ Single-user, single-process, local-first. All data stored in a local SQLite data
 | MCP Transport | stdio |
 | Test Runner | [Vitest](https://vitest.dev/) |
 | Scheduling | Constraint satisfaction algorithm |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 20
+
+### Install and Build
+
+```bash
+npm install
+npm run build
+```
+
+This compiles TypeScript to `dist/` and produces the runnable server at `dist/index.js`.
+
+### Test
+
+```bash
+npm test              # run all tests (578 tests)
+npm run test:watch    # watch mode
+npm run test:coverage # with coverage
+```
+
+### Quality Checks
+
+```bash
+npm run lint          # eslint
+npm run format:check  # prettier
+npm run quality       # all checks (lint, format, duplication, unused code, dependency rules, security)
+```
+
+## Connecting to an MCP-Compatible Agent
+
+This server communicates over **stdio** using the [Model Context Protocol](https://modelcontextprotocol.io/). Any MCP-compatible client can connect to it by spawning the built server as a subprocess.
+
+### Configuration
+
+The server accepts one environment variable:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CALENDAR_DB_PATH` | `./calendar.db` | Path to the SQLite database file |
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "smart-agentic-calendar": {
+      "command": "node",
+      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "env": {
+        "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
+      }
+    }
+  }
+}
+```
+
+### Claude Code (CLI)
+
+Add to your project's `.mcp.json` or global `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "smart-agentic-calendar": {
+      "command": "node",
+      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "env": {
+        "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "smart-agentic-calendar": {
+      "command": "node",
+      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "env": {
+        "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
+      }
+    }
+  }
+}
+```
+
+### Any MCP Client (Generic)
+
+Spawn the server as a child process with stdio transport:
+
+```bash
+CALENDAR_DB_PATH=/path/to/calendar.db node /path/to/smart-agentic-calendar/dist/index.js
+```
+
+The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
 
 ## MCP Tools
 
@@ -69,46 +178,11 @@ Single-user, single-process, local-first. All data stored in a local SQLite data
 - `set_availability` — define work hours per day of week
 - `set_focus_time` — define focus/deep-work blocks
 - `set_preferences` — buffer time, default priority, scheduling horizon, minimum block size
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 20
-
-### Install
-
-```bash
-npm install
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Test
-
-```bash
-npm test              # run all tests
-npm run test:watch    # watch mode
-npm run test:coverage # with coverage
-```
+- `get_preferences` — retrieve current configuration
 
 ## Development
 
 This project follows **test-driven development** (red-green-refactor) with a healthy test pyramid and dependency injection for testability. Property-based tests are used for pure scheduling functions and serialization round-trips.
-
-## Project Status
-
-Under active development. Current progress:
-
-- [x] **Unit 1: Foundation** — models, common utilities, database schema (74 tests)
-- [ ] **Unit 2: Storage** — repository layer (CRUD operations)
-- [ ] **Unit 3: Scheduling Engine** — constraint satisfaction, replanning, conflict detection
-- [ ] **Unit 4: Analytics** — productivity stats, schedule health, estimation accuracy
-- [ ] **Unit 5: MCP Server** — tool handlers, stdio transport
 
 ## License
 

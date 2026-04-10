@@ -12,7 +12,7 @@ const PRIORITY_RANK: Record<string, number> = {
   P4: 4,
 };
 
-export interface CompetingTask {
+interface CompetingTask {
   taskId: string;
   priority: TaskPriority;
   deadline: string | null;

@@ -1,4 +1,4 @@
-export type ErrorCode = "VALIDATION_ERROR" | "NOT_FOUND" | "CIRCULAR_DEPENDENCY" | "INVALID_STATE";
+type ErrorCode = "VALIDATION_ERROR" | "NOT_FOUND" | "CIRCULAR_DEPENDENCY" | "INVALID_STATE";
 
 export class AppError extends Error {
   public readonly code: ErrorCode;
