@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            dist
+          key: build-${{ github.sha }}
+
+  lint:
+    name: Lint & Format
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            dist
+          key: build-${{ github.sha }}
+
+      - run: npm run lint
+
+      - run: npm run format:check
+
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            dist
+          key: build-${{ github.sha }}
+
+      - run: npm run test:coverage
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  quality:
+    name: Quality Checks
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            dist
+          key: build-${{ github.sha }}
+
+      - name: Duplication check (jscpd)
+        run: npm run quality:duplication
+
+      - name: Unused code check (knip)
+        run: npm run quality:unused
+
+      - name: Architecture check (dependency-cruiser)
+        run: npm run quality:deps
+
+  security:
+    name: Security Scan
+    needs: [lint, test, quality]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            dist
+          key: build-${{ github.sha }}
+
+      - name: Install grype
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Security scan (grype)
+        run: grype dir:. --only-fixed --fail-on high

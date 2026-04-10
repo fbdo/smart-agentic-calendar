@@ -2,4 +2,4 @@ npx lint-staged
 npm run quality:duplication
 npm run quality:unused
 npm run quality:deps
-npm test
+npm run test:coverage

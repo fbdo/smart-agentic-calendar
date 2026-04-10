@@ -7,6 +7,6 @@
     "declarationMap": false,
     "sourceMap": false
   },
-  "include": ["src/**/*", "tests/**/*", "knip.config.ts"],
+  "include": ["src/**/*", "tests/**/*", "knip.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
