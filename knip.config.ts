@@ -6,6 +6,7 @@ const config: KnipConfig = {
     "src/common/index.ts",
     "src/storage/index.ts",
     "src/engine/index.ts",
+    "src/analytics/index.ts",
   ],
   project: ["src/**/*.ts"],
   ignoreDependencies: ["@types/*", "uuid"],
