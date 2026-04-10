@@ -37,18 +37,21 @@
 - [x] Units Generation - EXECUTE
 
 ### CONSTRUCTION PHASE (per unit)
-- [ ] Functional Design - EXECUTE (Unit 1: Foundation — in progress)
+- [x] Unit 1: Foundation — Functional Design COMPLETE, Code Generation COMPLETE (13 source, 12 test, 74 tests)
+- [x] Unit 2: Storage — Functional Design COMPLETE, Code Generation COMPLETE (7 source, 6 test, 125 tests)
+- [ ] Unit 3: Scheduling Engine — Functional Design, Code Generation
+- [ ] Unit 4: Analytics — Functional Design, Code Generation
+- [ ] Unit 5: MCP Server — Functional Design, Code Generation
 - [ ] NFR Requirements - SKIP
 - [ ] NFR Design - SKIP
 - [ ] Infrastructure Design - SKIP
-- [ ] Code Generation - EXECUTE (per unit)
 - [ ] Build and Test - EXECUTE
 
 ### OPERATIONS PHASE
 - [ ] Operations (Placeholder)
 
 ## Current Status
-- **Lifecycle Phase**: INCEPTION
-- **Current Stage**: Units Generation Complete
-- **Next Stage**: CONSTRUCTION PHASE — Functional Design (Unit 1: Foundation)
-- **Status**: Code Generation for Unit 1: Foundation — COMPLETE. Awaiting approval to proceed to Unit 2: Storage.
+- **Lifecycle Phase**: CONSTRUCTION
+- **Current Stage**: Code Generation for Unit 2: Storage — COMPLETE
+- **Next Stage**: Functional Design for Unit 3: Scheduling Engine
+- **Status**: Awaiting approval to proceed to Unit 3: Scheduling Engine. Full test suite: 204 tests passing.
