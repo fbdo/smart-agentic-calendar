@@ -112,7 +112,7 @@ export class DependencyResolver {
     const path: string[] = [];
 
     while (stack.length > 0) {
-      const current = stack.pop()!;
+      const current = stack.pop() as string;
       if (current === taskId) {
         throw new CircularDependencyError([taskId, ...path, current]);
       }
@@ -144,15 +144,16 @@ export class DependencyResolver {
     const result: Task[] = [];
 
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.shift() as Task;
       result.push(node);
 
       for (const depId of adj.get(node.id) ?? []) {
-        if (!taskMap.has(depId)) continue;
+        const depTask = taskMap.get(depId);
+        if (!depTask) continue;
         const newDegree = (inDegree.get(depId) ?? 1) - 1;
         inDegree.set(depId, newDegree);
         if (newDegree === 0) {
-          insertSorted(queue, taskMap.get(depId)!);
+          insertSorted(queue, depTask);
         }
       }
     }
