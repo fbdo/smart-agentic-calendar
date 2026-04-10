@@ -6,20 +6,26 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build
+    name: Build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 24]
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - run: npm ci
@@ -31,7 +37,7 @@ jobs:
           path: |
             node_modules
             dist
-          key: build-${{ github.sha }}
+          key: build-${{ github.sha }}-node${{ matrix.node-version }}
 
   lint:
     name: Lint & Format
@@ -42,43 +48,46 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             dist
-          key: build-${{ github.sha }}
+          key: build-${{ github.sha }}-node24
 
       - run: npm run lint
 
       - run: npm run format:check
 
   test:
-    name: Test
+    name: Test (Node ${{ matrix.node-version }})
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 24]
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
 
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             dist
-          key: build-${{ github.sha }}
+          key: build-${{ github.sha }}-node${{ matrix.node-version }}
 
       - run: npm run test:coverage
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
+          name: coverage-report-node${{ matrix.node-version }}
           path: coverage/
           retention-days: 14
 
@@ -91,14 +100,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             dist
-          key: build-${{ github.sha }}
+          key: build-${{ github.sha }}-node24
 
       - name: Duplication check (jscpd)
         run: npm run quality:duplication
@@ -118,14 +127,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
             dist
-          key: build-${{ github.sha }}
+          key: build-${{ github.sha }}-node24
 
       - name: Install grype
         run: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
