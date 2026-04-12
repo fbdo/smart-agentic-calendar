@@ -1,5 +1,7 @@
-import { rrulestr } from "rrule";
+import rruleLib from "rrule";
 import type { RRule } from "rrule";
+
+const { rrulestr } = rruleLib;
 import type { RecurrenceRepository } from "../storage/recurrence-repository.js";
 import type { TaskRepository } from "../storage/task-repository.js";
 import type { RecurrenceTemplate, RecurrenceInstance } from "../models/recurrence.js";
