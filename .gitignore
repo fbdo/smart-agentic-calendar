@@ -26,6 +26,7 @@ Thumbs.db
 # Environment
 .env
 .env.*
+.npmrc
 
 # Logs
 *.log

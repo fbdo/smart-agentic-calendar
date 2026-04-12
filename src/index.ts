@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Database } from "./storage/database.js";
 import { TaskRepository } from "./storage/task-repository.js";
 import { EventRepository } from "./storage/event-repository.js";

@@ -73,7 +73,7 @@ npm run quality       # all checks (lint, format, duplication, unused code, depe
 
 ## Connecting to an MCP-Compatible Agent
 
-This server communicates over **stdio** using the [Model Context Protocol](https://modelcontextprotocol.io/). Any MCP-compatible client can connect to it by spawning the built server as a subprocess.
+This server communicates over **stdio** using the [Model Context Protocol](https://modelcontextprotocol.io/). Any MCP-compatible client can connect to it by spawning the server as a subprocess.
 
 ### Configuration
 
@@ -91,8 +91,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "smart-agentic-calendar": {
-      "command": "node",
-      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -109,8 +109,8 @@ Add to your project's `.mcp.json` or global `~/.claude/settings.json`:
 {
   "mcpServers": {
     "smart-agentic-calendar": {
-      "command": "node",
-      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -127,8 +127,8 @@ Add to `.cursor/mcp.json` in your project root:
 {
   "mcpServers": {
     "smart-agentic-calendar": {
-      "command": "node",
-      "args": ["/absolute/path/to/smart-agentic-calendar/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -142,7 +142,13 @@ Add to `.cursor/mcp.json` in your project root:
 Spawn the server as a child process with stdio transport:
 
 ```bash
-CALENDAR_DB_PATH=/path/to/calendar.db node /path/to/smart-agentic-calendar/dist/index.js
+npx -y smart-agentic-calendar
+```
+
+Or with a custom database path:
+
+```bash
+CALENDAR_DB_PATH=/path/to/calendar.db npx -y smart-agentic-calendar
 ```
 
 The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
