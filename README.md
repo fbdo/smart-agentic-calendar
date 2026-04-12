@@ -92,7 +92,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -110,7 +110,7 @@ Add to your project's `.mcp.json` or global `~/.claude/settings.json`:
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -128,7 +128,7 @@ Add to `.cursor/mcp.json` in your project root:
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -142,13 +142,13 @@ Add to `.cursor/mcp.json` in your project root:
 Spawn the server as a child process with stdio transport:
 
 ```bash
-npx -y smart-agentic-calendar
+npx -y @fbdo/smart-agentic-calendar
 ```
 
 Or with a custom database path:
 
 ```bash
-CALENDAR_DB_PATH=/path/to/calendar.db npx -y smart-agentic-calendar
+CALENDAR_DB_PATH=/path/to/calendar.db npx -y @fbdo/smart-agentic-calendar
 ```
 
 The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
