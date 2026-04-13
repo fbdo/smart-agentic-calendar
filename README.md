@@ -2,6 +2,27 @@
 
 A local-first smart calendar MCP server for AI agents. Inspired by [Reclaim.ai](https://reclaim.ai/) and [Motion](https://www.usemotion.com/), it automatically re-plans tasks, recalculates the schedule, and helps AI agents act as personal scheduling assistants.
 
+## Is This For You?
+
+This project was designed with a specific set of trade-offs. Understanding them will help you decide if it fits your needs.
+
+### What it is
+
+- **A personal, single-user scheduling assistant.** One person, one calendar, one local database. Your data never leaves your machine.
+- **An MCP server, not an app.** There is no web UI, no CLI dashboard, no REST API. The interface is an AI agent (like Claude) that calls structured tools over stdio. The agent *is* the UI.
+- **A deterministic constraint solver, not machine learning.** The scheduler uses hard constraints (availability, deadlines, dependencies, events) and weighted soft constraints (priority, focus time alignment, energy matching, buffer gaps) to place tasks. It produces the same output given the same input — no training data, no model drift, no black box.
+- **Optimized for a small task set.** The algorithm targets **< 500ms replan latency with up to ~200 active tasks**. It does a full reschedule of all flexible tasks on every change rather than incremental patching, which keeps the logic simple and deterministic. This works well for a personal workload but would not scale to thousands of tasks.
+- **Local-first with SQLite.** All state lives in a single SQLite file using synchronous I/O (better-sqlite3). No network calls, no cloud services, no container infrastructure. Portable and private.
+- **Background replanning with instant tool responses.** Mutations (create, update, delete) return immediately and trigger an async replan via `setImmediate`. Multiple rapid changes are debounced into a single replan cycle. Read tools report a `schedule_status` field so the agent knows if the schedule is stale.
+
+### What it is not
+
+- **Not a team or shared calendar.** There is no multi-tenancy, no user accounts, no access control. If you need shared scheduling across a team, this is not the right tool.
+- **Not a Google/Outlook integration.** It does not sync with external calendar providers (Google Calendar, Outlook, CalDAV). Events are created directly through the MCP tools. External calendar sync is a potential v2 feature, not a v1 goal.
+- **Not a web service.** There is no HTTP/SSE transport, no hosted version, no API gateway. It runs as a local Node.js process communicating over stdio.
+- **Not an enterprise scheduler.** The full-reschedule approach and single-process SQLite architecture are deliberately simple. There is no caching layer (SQLite is fast enough locally), no distributed locking, no horizontal scaling. The design favors correctness and simplicity over throughput.
+- **Not a learning system.** The scheduler does not learn from your habits or adjust weights over time. Priorities, deadlines, and constraints are explicit inputs — the algorithm is transparent and predictable.
+
 ## What It Does
 
 - **Time-blocking scheduler** that assigns specific time slots to tasks based on deadlines, durations, and priorities (P1-P4)
@@ -13,63 +34,6 @@ A local-first smart calendar MCP server for AI agents. Inspired by [Reclaim.ai](
 - **Task dependencies** with cycle detection
 - **Conflict detection** that identifies at-risk tasks and suggests deprioritizations
 - **Analytics** — completion rates, schedule health, estimation accuracy, time allocation by category
-
-## Architecture
-
-```
-src/
-  models/       Domain types (Task, Event, TimeBlock, Config, etc.)
-  common/       Shared utilities (ID generation, time functions, constants)
-  storage/      SQLite database layer (better-sqlite3)
-  engine/       Scheduling engine, replanning, conflict detection, recurrence
-  analytics/    Productivity stats, schedule health, estimation accuracy
-  mcp/          MCP server and tool handlers
-  index.ts      Composition root and entry point
-```
-
-Single-user, single-process, local-first. All data stored in a local SQLite database with no external service dependencies.
-
-## Tech Stack
-
-| Component | Choice |
-|-----------|--------|
-| Language | TypeScript (strict mode) |
-| Runtime | Node.js >= 20 |
-| Storage | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
-| MCP Transport | stdio |
-| Test Runner | [Vitest](https://vitest.dev/) |
-| Scheduling | Constraint satisfaction algorithm |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 20
-
-### Install and Build
-
-```bash
-npm install
-npm run build
-```
-
-This compiles TypeScript to `dist/` and produces the runnable server at `dist/index.js`.
-
-### Test
-
-```bash
-npm test              # run all tests (578 tests)
-npm run test:watch    # watch mode
-npm run test:coverage # with coverage
-```
-
-### Quality Checks
-
-```bash
-npm run lint          # eslint
-npm run format:check  # prettier
-npm run quality       # all checks (lint, format, duplication, unused code, dependency rules, security)
-```
 
 ## Connecting to an MCP-Compatible Agent
 
@@ -186,9 +150,64 @@ The server reads JSON-RPC messages from stdin and writes responses to stdout. Di
 - `set_preferences` — buffer time, default priority, scheduling horizon, minimum block size
 - `get_preferences` — retrieve current configuration
 
+## Architecture
+
+```
+src/
+  models/       Domain types (Task, Event, TimeBlock, Config, etc.)
+  common/       Shared utilities (ID generation, time functions, constants)
+  storage/      SQLite database layer (better-sqlite3)
+  engine/       Scheduling engine, replanning, conflict detection, recurrence
+  analytics/    Productivity stats, schedule health, estimation accuracy
+  mcp/          MCP server and tool handlers
+  index.ts      Composition root and entry point
+```
+
+Single-user, single-process, local-first. All data stored in a local SQLite database with no external service dependencies.
+
+## Tech Stack
+
+| Component | Choice |
+|-----------|--------|
+| Language | TypeScript (strict mode) |
+| Runtime | Node.js >= 20 |
+| Storage | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
+| MCP Transport | stdio |
+| Test Runner | [Vitest](https://vitest.dev/) |
+| Scheduling | Constraint satisfaction algorithm |
+
 ## Development
 
 This project follows **test-driven development** (red-green-refactor) with a healthy test pyramid and dependency injection for testability. Property-based tests are used for pure scheduling functions and serialization round-trips.
+
+### Prerequisites
+
+- Node.js >= 20
+
+### Install and Build
+
+```bash
+npm install
+npm run build
+```
+
+This compiles TypeScript to `dist/` and produces the runnable server at `dist/index.js`.
+
+### Test
+
+```bash
+npm test              # run all tests (578 tests)
+npm run test:watch    # watch mode
+npm run test:coverage # with coverage
+```
+
+### Quality Checks
+
+```bash
+npm run lint          # eslint
+npm run format:check  # prettier
+npm run quality       # all checks (lint, format, duplication, unused code, dependency rules, security)
+```
 
 ## License
 
