@@ -7,6 +7,7 @@ import type { ReplanCoordinator } from "../../../src/engine/replan-coordinator.j
 import type { ConflictDetector } from "../../../src/engine/conflict-detector.js";
 import type { Task } from "../../../src/models/task.js";
 import type { TimeBlock } from "../../../src/models/schedule.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -79,6 +80,7 @@ function createMocks() {
     configRepo,
     replanCoordinator,
     conflictDetector,
+    createNoOpLogger(),
   );
 
   return { tools, scheduleRepo, taskRepo, configRepo, replanCoordinator, conflictDetector };

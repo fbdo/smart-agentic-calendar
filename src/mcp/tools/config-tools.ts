@@ -1,5 +1,6 @@
 import type { ConfigRepository } from "../../storage/config-repository.js";
 import type { ReplanCoordinator } from "../../engine/replan-coordinator.js";
+import type { Logger } from "../../common/logger.js";
 import {
   validateSetAvailabilityInput,
   validateSetFocusTimeInput,
@@ -18,10 +19,12 @@ import {
 export class ConfigTools {
   private readonly configRepo: ConfigRepository;
   private readonly replanCoordinator: ReplanCoordinator;
+  private readonly logger: Logger;
 
-  constructor(configRepo: ConfigRepository, replanCoordinator: ReplanCoordinator) {
+  constructor(configRepo: ConfigRepository, replanCoordinator: ReplanCoordinator, logger: Logger) {
     this.configRepo = configRepo;
     this.replanCoordinator = replanCoordinator;
+    this.logger = logger;
   }
 
   setAvailability(input: SetAvailabilityMcpInput) {

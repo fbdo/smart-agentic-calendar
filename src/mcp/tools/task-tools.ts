@@ -3,6 +3,7 @@ import type { RecurrenceManager } from "../../engine/recurrence-manager.js";
 import type { DependencyResolver } from "../../engine/dependency-resolver.js";
 import type { ReplanCoordinator } from "../../engine/replan-coordinator.js";
 import type { DependencyEdge } from "../../models/dependency.js";
+import type { Logger } from "../../common/logger.js";
 import { NotFoundError, InvalidStateError } from "../../models/errors.js";
 import {
   validateCreateTaskInput,
@@ -24,17 +25,20 @@ export class TaskTools {
   private readonly recurrenceManager: RecurrenceManager;
   private readonly dependencyResolver: DependencyResolver;
   private readonly replanCoordinator: ReplanCoordinator;
+  private readonly logger: Logger;
 
   constructor(
     taskRepo: TaskRepository,
     recurrenceManager: RecurrenceManager,
     dependencyResolver: DependencyResolver,
     replanCoordinator: ReplanCoordinator,
+    logger: Logger,
   ) {
     this.taskRepo = taskRepo;
     this.recurrenceManager = recurrenceManager;
     this.dependencyResolver = dependencyResolver;
     this.replanCoordinator = replanCoordinator;
+    this.logger = logger;
   }
 
   createTask(input: CreateTaskMcpInput) {

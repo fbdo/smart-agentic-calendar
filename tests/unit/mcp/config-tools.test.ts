@@ -3,6 +3,7 @@ import { ConfigTools } from "../../../src/mcp/tools/config-tools.js";
 import type { ConfigRepository } from "../../../src/storage/config-repository.js";
 import type { ReplanCoordinator } from "../../../src/engine/replan-coordinator.js";
 import type { UserConfig } from "../../../src/models/config.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 const defaultConfig: UserConfig = {
   availability: {
@@ -34,7 +35,7 @@ function createMocks() {
     requestReplan: vi.fn(),
   } as unknown as ReplanCoordinator;
 
-  const tools = new ConfigTools(configRepo, replanCoordinator);
+  const tools = new ConfigTools(configRepo, replanCoordinator, createNoOpLogger());
   return { tools, configRepo, replanCoordinator };
 }
 

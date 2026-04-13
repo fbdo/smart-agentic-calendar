@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { AnalyticsTools } from "../../../src/mcp/tools/analytics-tools.js";
 import type { AnalyticsEngine } from "../../../src/analytics/analytics-engine.js";
 import { ValidationError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 function createMocks() {
   const analyticsEngine = {
@@ -36,7 +37,7 @@ function createMocks() {
     }),
   } as unknown as AnalyticsEngine;
 
-  const tools = new AnalyticsTools(analyticsEngine);
+  const tools = new AnalyticsTools(analyticsEngine, createNoOpLogger());
   return { tools, analyticsEngine };
 }
 

@@ -6,6 +6,7 @@ import type { ConflictDetector } from "../../engine/conflict-detector.js";
 import type { Task } from "../../models/task.js";
 import type { TimeBlock } from "../../models/schedule.js";
 import type { DependencyEdge } from "../../models/dependency.js";
+import type { Logger } from "../../common/logger.js";
 import {
   validateGetScheduleInput,
   mapConflictOutput,
@@ -18,6 +19,7 @@ export class ScheduleTools {
   private readonly configRepo: ConfigRepository;
   private readonly replanCoordinator: ReplanCoordinator;
   private readonly conflictDetector: ConflictDetector;
+  private readonly logger: Logger;
 
   constructor(
     scheduleRepo: ScheduleRepository,
@@ -25,12 +27,14 @@ export class ScheduleTools {
     configRepo: ConfigRepository,
     replanCoordinator: ReplanCoordinator,
     conflictDetector: ConflictDetector,
+    logger: Logger,
   ) {
     this.scheduleRepo = scheduleRepo;
     this.taskRepo = taskRepo;
     this.configRepo = configRepo;
     this.replanCoordinator = replanCoordinator;
     this.conflictDetector = conflictDetector;
+    this.logger = logger;
   }
 
   getSchedule(input: GetScheduleMcpInput) {

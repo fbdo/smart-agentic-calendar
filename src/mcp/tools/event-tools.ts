@@ -1,5 +1,6 @@
 import type { EventRepository } from "../../storage/event-repository.js";
 import type { ReplanCoordinator } from "../../engine/replan-coordinator.js";
+import type { Logger } from "../../common/logger.js";
 import { NotFoundError } from "../../models/errors.js";
 import {
   validateCreateEventInput,
@@ -16,10 +17,12 @@ import {
 export class EventTools {
   private readonly eventRepo: EventRepository;
   private readonly replanCoordinator: ReplanCoordinator;
+  private readonly logger: Logger;
 
-  constructor(eventRepo: EventRepository, replanCoordinator: ReplanCoordinator) {
+  constructor(eventRepo: EventRepository, replanCoordinator: ReplanCoordinator, logger: Logger) {
     this.eventRepo = eventRepo;
     this.replanCoordinator = replanCoordinator;
+    this.logger = logger;
   }
 
   createEvent(input: CreateEventMcpInput) {

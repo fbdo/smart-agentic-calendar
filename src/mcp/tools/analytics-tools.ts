@@ -1,4 +1,5 @@
 import type { AnalyticsEngine } from "../../analytics/analytics-engine.js";
+import type { Logger } from "../../common/logger.js";
 import {
   validatePeriodInput,
   mapProductivityOutput,
@@ -9,9 +10,11 @@ import {
 
 export class AnalyticsTools {
   private readonly analyticsEngine: AnalyticsEngine;
+  private readonly logger: Logger;
 
-  constructor(analyticsEngine: AnalyticsEngine) {
+  constructor(analyticsEngine: AnalyticsEngine, logger: Logger) {
     this.analyticsEngine = analyticsEngine;
+    this.logger = logger;
   }
 
   getProductivityStats(input: { period: string }) {

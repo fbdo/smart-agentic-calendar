@@ -10,6 +10,7 @@ import {
   CircularDependencyError,
   InvalidStateError,
 } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -64,7 +65,13 @@ function createMocks() {
     requestReplan: vi.fn(),
   } as unknown as ReplanCoordinator;
 
-  const tools = new TaskTools(taskRepo, recurrenceManager, dependencyResolver, replanCoordinator);
+  const tools = new TaskTools(
+    taskRepo,
+    recurrenceManager,
+    dependencyResolver,
+    replanCoordinator,
+    createNoOpLogger(),
+  );
 
   return { tools, taskRepo, recurrenceManager, dependencyResolver, replanCoordinator };
 }

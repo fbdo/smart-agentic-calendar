@@ -76,20 +76,29 @@ export function createApp(dbPath: string) {
     recurrenceManager,
     dependencyResolver,
     replanCoordinator,
+    logger,
   );
-  const eventTools = new EventTools(eventRepo, replanCoordinator);
+  const eventTools = new EventTools(eventRepo, replanCoordinator, logger);
   const scheduleTools = new ScheduleTools(
     scheduleRepo,
     taskRepo,
     configRepo,
     replanCoordinator,
     conflictDetector,
+    logger,
   );
-  const analyticsTools = new AnalyticsTools(analyticsEngine);
-  const configTools = new ConfigTools(configRepo, replanCoordinator);
+  const analyticsTools = new AnalyticsTools(analyticsEngine, logger);
+  const configTools = new ConfigTools(configRepo, replanCoordinator, logger);
 
   // 6. MCP Server
-  const server = new McpServer(taskTools, eventTools, scheduleTools, analyticsTools, configTools);
+  const server = new McpServer(
+    taskTools,
+    eventTools,
+    scheduleTools,
+    analyticsTools,
+    configTools,
+    logger,
+  );
 
   return {
     server,

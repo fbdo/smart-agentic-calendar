@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { McpServer, wrapToolHandler } from "../../../src/mcp/server.js";
 import { ValidationError, NotFoundError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 import type { TaskTools } from "../../../src/mcp/tools/task-tools.js";
 import type { EventTools } from "../../../src/mcp/tools/event-tools.js";
 import type { ScheduleTools } from "../../../src/mcp/tools/schedule-tools.js";
@@ -57,6 +58,7 @@ describe("McpServer", () => {
       mocks.scheduleTools,
       mocks.analyticsTools,
       mocks.configTools,
+      createNoOpLogger(),
     );
 
     const toolNames = server.getToolNames();
@@ -87,7 +89,7 @@ describe("McpServer", () => {
 describe("wrapToolHandler", () => {
   it("success wrapper: returns content with JSON text", async () => {
     const handler = () => ({ id: "t-1", title: "Test" });
-    const wrapped = wrapToolHandler(handler);
+    const wrapped = wrapToolHandler(handler, "test_tool", createNoOpLogger());
     const result = await wrapped({});
 
     expect(result.content).toHaveLength(1);
@@ -100,7 +102,7 @@ describe("wrapToolHandler", () => {
     const handler = () => {
       throw new ValidationError("title is required");
     };
-    const wrapped = wrapToolHandler(handler);
+    const wrapped = wrapToolHandler(handler, "test_tool", createNoOpLogger());
     const result = await wrapped({});
 
     expect(result.isError).toBe(true);
@@ -113,7 +115,7 @@ describe("wrapToolHandler", () => {
     const handler = () => {
       throw new NotFoundError("task", "abc-123");
     };
-    const wrapped = wrapToolHandler(handler);
+    const wrapped = wrapToolHandler(handler, "test_tool", createNoOpLogger());
     const result = await wrapped({});
 
     expect(result.isError).toBe(true);
@@ -126,7 +128,7 @@ describe("wrapToolHandler", () => {
     const handler = () => {
       throw new Error("something broke");
     };
-    const wrapped = wrapToolHandler(handler);
+    const wrapped = wrapToolHandler(handler, "test_tool", createNoOpLogger());
     const result = await wrapped({});
 
     expect(result.isError).toBe(true);
@@ -137,7 +139,7 @@ describe("wrapToolHandler", () => {
 
   it("async handler (replan): awaits Promise before returning", async () => {
     const handler = async () => ({ schedule: [], schedule_status: "up_to_date" });
-    const wrapped = wrapToolHandler(handler);
+    const wrapped = wrapToolHandler(handler, "test_tool", createNoOpLogger());
     const result = await wrapped({});
 
     expect(result.isError).toBeUndefined();

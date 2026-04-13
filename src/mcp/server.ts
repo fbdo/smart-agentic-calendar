@@ -3,6 +3,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { AppError } from "../models/errors.js";
+import type { Logger } from "../common/logger.js";
 import type { TaskTools } from "./tools/task-tools.js";
 import type { EventTools } from "./tools/event-tools.js";
 import type { ScheduleTools } from "./tools/schedule-tools.js";
@@ -20,13 +21,16 @@ interface ToolDefinition {
   handler: (input: Record<string, unknown>) => unknown;
 }
 
-export function wrapToolHandler(handler: (input: Record<string, unknown>) => unknown): (
-  input: Record<string, unknown>,
-) => Promise<{
+export function wrapToolHandler(
+  handler: (input: Record<string, unknown>) => unknown,
+  toolName: string,
+  logger: Logger,
+): (input: Record<string, unknown>) => Promise<{
   content: { type: string; text: string }[];
   isError?: boolean;
 }> {
   return async (input) => {
+    logger.debug("tools", { event: "tool_invoked", tool: toolName });
     try {
       let result = handler(input);
       if (result instanceof Promise) {
@@ -37,6 +41,12 @@ export function wrapToolHandler(handler: (input: Record<string, unknown>) => unk
       };
     } catch (error) {
       if (error instanceof AppError) {
+        logger.debug("tools", {
+          event: "tool_error",
+          tool: toolName,
+          code: error.code,
+          message: error.message,
+        });
         return {
           content: [
             {
@@ -47,6 +57,7 @@ export function wrapToolHandler(handler: (input: Record<string, unknown>) => unk
           isError: true,
         };
       }
+      logger.error("tools", { event: "tool_unexpected_error", tool: toolName });
       return {
         content: [
           {
@@ -65,6 +76,7 @@ export function wrapToolHandler(handler: (input: Record<string, unknown>) => unk
 
 export class McpServer {
   private readonly tools = new Map<string, ToolDefinition>();
+  private readonly logger: Logger;
 
   constructor(
     taskTools: TaskTools,
@@ -72,7 +84,9 @@ export class McpServer {
     scheduleTools: ScheduleTools,
     analyticsTools: AnalyticsTools,
     configTools: ConfigTools,
+    logger: Logger,
   ) {
+    this.logger = logger;
     this.registerTaskTools(taskTools);
     this.registerEventTools(eventTools);
     this.registerScheduleTools(scheduleTools);
@@ -119,7 +133,7 @@ export class McpServer {
         };
       }
 
-      const wrapped = wrapToolHandler(tool.handler);
+      const wrapped = wrapToolHandler(tool.handler, toolName, this.logger);
       return wrapped((request.params.arguments ?? {}) as Record<string, unknown>);
     });
 

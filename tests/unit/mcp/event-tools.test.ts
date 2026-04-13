@@ -4,6 +4,7 @@ import type { EventRepository } from "../../../src/storage/event-repository.js";
 import type { ReplanCoordinator } from "../../../src/engine/replan-coordinator.js";
 import type { Event } from "../../../src/models/event.js";
 import { NotFoundError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 function makeEvent(overrides: Partial<Event> = {}): Event {
   return {
@@ -32,7 +33,7 @@ function createMocks() {
     requestReplan: vi.fn(),
   } as unknown as ReplanCoordinator;
 
-  const tools = new EventTools(eventRepo, replanCoordinator);
+  const tools = new EventTools(eventRepo, replanCoordinator, createNoOpLogger());
 
   return { tools, eventRepo, replanCoordinator };
 }
