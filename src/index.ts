@@ -18,30 +18,38 @@ import { ScheduleTools } from "./mcp/tools/schedule-tools.js";
 import { AnalyticsTools } from "./mcp/tools/analytics-tools.js";
 import { ConfigTools } from "./mcp/tools/config-tools.js";
 import { McpServer } from "./mcp/server.js";
-import { createNoOpLogger } from "./common/logger.js";
+import {
+  AppLogger,
+  createStderrTransport,
+  createNoOpLogger,
+  type Logger,
+  type LoggingLevel,
+} from "./common/logger.js";
+
+export { createNoOpLogger } from "./common/logger.js";
 
 export function getDbPath(): string {
   return process.env.CALENDAR_DB_PATH ?? "./calendar.db";
 }
 
-export function createApp(dbPath: string) {
-  // 0. Logger (temporary no-op until Task 6 wires real logger)
-  const logger = createNoOpLogger();
+export function createApp(dbPath: string, logger?: Logger) {
+  // 0. Logger (defaults to no-op if not provided)
+  const log = logger ?? createNoOpLogger();
 
   // 1. Database
-  const database = new Database(dbPath, logger);
+  const database = new Database(dbPath, log);
 
   // 2. Repositories
-  const taskRepo = new TaskRepository(database, logger);
-  const eventRepo = new EventRepository(database, logger);
-  const configRepo = new ConfigRepository(database, logger);
-  const scheduleRepo = new ScheduleRepository(database, logger);
-  const analyticsRepo = new AnalyticsRepository(database, logger);
-  const recurrenceRepo = new RecurrenceRepository(database, logger);
+  const taskRepo = new TaskRepository(database, log);
+  const eventRepo = new EventRepository(database, log);
+  const configRepo = new ConfigRepository(database, log);
+  const scheduleRepo = new ScheduleRepository(database, log);
+  const analyticsRepo = new AnalyticsRepository(database, log);
+  const recurrenceRepo = new RecurrenceRepository(database, log);
 
   // 3. Engine components
-  const dependencyResolver = new DependencyResolver(logger);
-  const conflictDetector = new ConflictDetector(logger);
+  const dependencyResolver = new DependencyResolver(log);
+  const conflictDetector = new ConflictDetector(log);
   const scheduler = new Scheduler(
     taskRepo,
     eventRepo,
@@ -49,16 +57,16 @@ export function createApp(dbPath: string) {
     conflictDetector,
     dependencyResolver,
     scheduleRepo,
-    logger,
+    log,
   );
-  const recurrenceManager = new RecurrenceManager(recurrenceRepo, taskRepo, logger);
+  const recurrenceManager = new RecurrenceManager(recurrenceRepo, taskRepo, log);
   const replanCoordinator = new ReplanCoordinator(
     scheduler,
     scheduleRepo,
     taskRepo,
     configRepo,
     recurrenceManager,
-    logger,
+    log,
   );
 
   // 4. Analytics
@@ -67,7 +75,7 @@ export function createApp(dbPath: string) {
     taskRepo,
     scheduleRepo,
     configRepo,
-    logger,
+    log,
   );
 
   // 5. MCP Tool handlers
@@ -76,19 +84,19 @@ export function createApp(dbPath: string) {
     recurrenceManager,
     dependencyResolver,
     replanCoordinator,
-    logger,
+    log,
   );
-  const eventTools = new EventTools(eventRepo, replanCoordinator, logger);
+  const eventTools = new EventTools(eventRepo, replanCoordinator, log);
   const scheduleTools = new ScheduleTools(
     scheduleRepo,
     taskRepo,
     configRepo,
     replanCoordinator,
     conflictDetector,
-    logger,
+    log,
   );
-  const analyticsTools = new AnalyticsTools(analyticsEngine, logger);
-  const configTools = new ConfigTools(configRepo, replanCoordinator, logger);
+  const analyticsTools = new AnalyticsTools(analyticsEngine, log);
+  const configTools = new ConfigTools(configRepo, replanCoordinator, log);
 
   // 6. MCP Server
   const server = new McpServer(
@@ -97,7 +105,7 @@ export function createApp(dbPath: string) {
     scheduleTools,
     analyticsTools,
     configTools,
-    logger,
+    log,
   );
 
   return {
@@ -114,9 +122,12 @@ export function createApp(dbPath: string) {
 // Entry point — start the server when run directly (not imported by tests)
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   const dbPath = getDbPath();
-  const { server } = createApp(dbPath);
-  server.start().catch((error) => {
-    process.stderr.write(`Fatal: ${error}\n`);
+  const logLevel = (process.env.LOG_LEVEL as LoggingLevel) ?? "warning";
+  const appLogger = new AppLogger([createStderrTransport(logLevel)]);
+
+  const { server } = createApp(dbPath, appLogger);
+  server.start(appLogger).catch((error) => {
+    appLogger.emergency("mcp", `Fatal: ${error}`);
     process.exit(1);
   });
 }

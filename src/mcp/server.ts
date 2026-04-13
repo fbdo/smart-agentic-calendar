@@ -3,7 +3,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { AppError } from "../models/errors.js";
-import type { Logger } from "../common/logger.js";
+import type { Logger, AppLogger, LogTransport } from "../common/logger.js";
 import type { TaskTools } from "./tools/task-tools.js";
 import type { EventTools } from "./tools/event-tools.js";
 import type { ScheduleTools } from "./tools/schedule-tools.js";
@@ -19,6 +19,13 @@ interface ToolDefinition {
   description: string;
   inputSchema: Record<string, unknown>;
   handler: (input: Record<string, unknown>) => unknown;
+}
+
+// eslint-disable-next-line sonarjs/deprecation -- Low-level Server is needed for sendLoggingMessage
+function createMcpTransport(server: Server): LogTransport {
+  return (level, logger, data) => {
+    server.sendLoggingMessage({ level, logger, data });
+  };
 }
 
 export function wrapToolHandler(
@@ -98,12 +105,16 @@ export class McpServer {
     return [...this.tools.keys()];
   }
 
-  async start(): Promise<void> {
+  async start(appLogger?: AppLogger): Promise<void> {
     // eslint-disable-next-line sonarjs/deprecation -- Low-level Server is needed for setRequestHandler
     const server = new Server(
       { name: "smart-agentic-calendar", version: "1.0.0" },
-      { capabilities: { tools: {} } },
+      { capabilities: { tools: {}, logging: {} } },
     );
+
+    if (appLogger) {
+      appLogger.addTransport(createMcpTransport(server));
+    }
 
     const toolsArray = [...this.tools.values()];
 
@@ -119,6 +130,7 @@ export class McpServer {
       const toolName = request.params.name;
       const tool = this.tools.get(toolName);
       if (!tool) {
+        this.logger.warning("mcp", { event: "unknown_tool", tool: toolName });
         return {
           content: [
             {
@@ -139,7 +151,7 @@ export class McpServer {
 
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    process.stderr.write("Smart Agentic Calendar MCP server started\n");
+    this.logger.info("mcp", "Smart Agentic Calendar MCP server started");
   }
 
   private register(def: ToolDefinition): void {
