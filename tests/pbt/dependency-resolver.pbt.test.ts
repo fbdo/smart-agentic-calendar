@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DependencyResolver } from "../../src/engine/dependency-resolver.js";
+import { createNoOpLogger } from "../../src/common/logger.js";
 import type { Task } from "../../src/models/task.js";
 import type { DependencyEdge } from "../../src/models/dependency.js";
 
@@ -60,7 +61,7 @@ function randomDAG(
 }
 
 describe("DependencyResolver PBT", () => {
-  const resolver = new DependencyResolver();
+  const resolver = new DependencyResolver(createNoOpLogger());
 
   describe("topological sort property: every edge (A→B) has A before B", () => {
     const seeds = [

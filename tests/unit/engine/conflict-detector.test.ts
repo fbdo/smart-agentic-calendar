@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ConflictDetector } from "../../../src/engine/conflict-detector.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 import type { Task } from "../../../src/models/task.js";
 import type { TimeBlock } from "../../../src/models/schedule.js";
 import type { Availability } from "../../../src/models/config.js";
@@ -47,7 +48,7 @@ const weekdayAvailability: Availability = {
 };
 
 describe("ConflictDetector", () => {
-  const detector = new ConflictDetector();
+  const detector = new ConflictDetector(createNoOpLogger());
 
   describe("detectConflicts", () => {
     it("detects overdue task (deadline in the past)", () => {

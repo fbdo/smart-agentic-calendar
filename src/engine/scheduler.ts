@@ -8,6 +8,7 @@ import type { TaskRepository } from "../storage/task-repository.js";
 import type { EventRepository } from "../storage/event-repository.js";
 import type { ConfigRepository } from "../storage/config-repository.js";
 import type { ScheduleRepository } from "../storage/schedule-repository.js";
+import type { Logger } from "../common/logger.js";
 import { generateId } from "../common/id.js";
 import { diffMinutes, addMinutes } from "../common/time.js";
 import { ConflictDetector } from "./conflict-detector.js";
@@ -247,6 +248,7 @@ export class Scheduler {
   private readonly conflictDetector: ConflictDetector;
   private readonly dependencyResolver: DependencyResolver;
   private readonly scheduleRepo: ScheduleRepository;
+  private readonly logger: Logger;
 
   constructor(
     taskRepo: TaskRepository,
@@ -255,6 +257,7 @@ export class Scheduler {
     conflictDetector: ConflictDetector,
     dependencyResolver: DependencyResolver,
     scheduleRepo: ScheduleRepository,
+    logger: Logger,
   ) {
     this.taskRepo = taskRepo;
     this.eventRepo = eventRepo;
@@ -262,9 +265,16 @@ export class Scheduler {
     this.conflictDetector = conflictDetector;
     this.dependencyResolver = dependencyResolver;
     this.scheduleRepo = scheduleRepo;
+    this.logger = logger;
   }
 
   generateSchedule(start: Date, end: Date): ScheduleResult {
+    this.logger.debug("scheduler", {
+      event: "generate_start",
+      horizonStart: start.toISOString(),
+      horizonEnd: end.toISOString(),
+    });
+
     const config = this.configRepo.getFullConfig();
     const now = new Date();
 
@@ -362,11 +372,19 @@ export class Scheduler {
       now,
     );
 
-    return {
+    const result = {
       timeBlocks: allTimeBlocks.filter((b) => !pinnedBlocks.includes(b)),
       conflicts,
       atRiskTasks,
     };
+
+    this.logger.info("scheduler", {
+      event: "generate_complete",
+      blocksCount: result.timeBlocks.length,
+      atRiskCount: result.atRiskTasks.length,
+    });
+
+    return result;
   }
 }
 

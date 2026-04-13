@@ -6,6 +6,7 @@ import type { RecurrenceRepository } from "../storage/recurrence-repository.js";
 import type { TaskRepository } from "../storage/task-repository.js";
 import type { RecurrenceTemplate, RecurrenceInstance } from "../models/recurrence.js";
 import type { Task } from "../models/task.js";
+import type { Logger } from "../common/logger.js";
 import { ValidationError, NotFoundError, InvalidStateError } from "../models/errors.js";
 
 type TaskFields = Omit<Task, "id" | "createdAt" | "updatedAt" | "status" | "actualDuration">;
@@ -13,11 +14,13 @@ type TaskFields = Omit<Task, "id" | "createdAt" | "updatedAt" | "status" | "actu
 export class RecurrenceManager {
   private readonly recurrenceRepo: RecurrenceRepository;
   private readonly taskRepo: TaskRepository;
+  private readonly logger: Logger;
   private currentHorizonEnd: Date | null = null;
 
-  constructor(recurrenceRepo: RecurrenceRepository, taskRepo: TaskRepository) {
+  constructor(recurrenceRepo: RecurrenceRepository, taskRepo: TaskRepository, logger: Logger) {
     this.recurrenceRepo = recurrenceRepo;
     this.taskRepo = taskRepo;
+    this.logger = logger;
   }
 
   createRecurringTask(

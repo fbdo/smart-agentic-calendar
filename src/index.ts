@@ -40,8 +40,8 @@ export function createApp(dbPath: string) {
   const recurrenceRepo = new RecurrenceRepository(database, logger);
 
   // 3. Engine components
-  const dependencyResolver = new DependencyResolver();
-  const conflictDetector = new ConflictDetector();
+  const dependencyResolver = new DependencyResolver(logger);
+  const conflictDetector = new ConflictDetector(logger);
   const scheduler = new Scheduler(
     taskRepo,
     eventRepo,
@@ -49,14 +49,16 @@ export function createApp(dbPath: string) {
     conflictDetector,
     dependencyResolver,
     scheduleRepo,
+    logger,
   );
-  const recurrenceManager = new RecurrenceManager(recurrenceRepo, taskRepo);
+  const recurrenceManager = new RecurrenceManager(recurrenceRepo, taskRepo, logger);
   const replanCoordinator = new ReplanCoordinator(
     scheduler,
     scheduleRepo,
     taskRepo,
     configRepo,
     recurrenceManager,
+    logger,
   );
 
   // 4. Analytics

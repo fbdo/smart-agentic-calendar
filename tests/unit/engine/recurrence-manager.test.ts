@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { RecurrenceManager } from "../../../src/engine/recurrence-manager.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 import type { RecurrenceRepository } from "../../../src/storage/recurrence-repository.js";
 import type { TaskRepository } from "../../../src/storage/task-repository.js";
 import type { Task } from "../../../src/models/task.js";
@@ -120,7 +121,7 @@ describe("RecurrenceManager", () => {
   describe("createRecurringTask", () => {
     it("creates a daily recurrence template with instances within horizon", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Daily standup prep",
@@ -152,7 +153,7 @@ describe("RecurrenceManager", () => {
 
     it("creates a weekly recurrence", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Weekly review",
@@ -176,7 +177,7 @@ describe("RecurrenceManager", () => {
 
     it("respects COUNT limit", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Limited task",
@@ -200,7 +201,7 @@ describe("RecurrenceManager", () => {
 
     it("throws ValidationError for invalid RRULE", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Bad rule",
@@ -226,7 +227,7 @@ describe("RecurrenceManager", () => {
   describe("generateInstances", () => {
     it("does not generate duplicate instances", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Daily task",
@@ -257,7 +258,7 @@ describe("RecurrenceManager", () => {
 
     it("skips dates with skip exceptions", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Daily task",
@@ -300,7 +301,7 @@ describe("RecurrenceManager", () => {
 
     it("returns empty for recurrence with no matching dates in horizon", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Christmas task",
@@ -332,7 +333,7 @@ describe("RecurrenceManager", () => {
   describe("expandHorizon", () => {
     it("generates new instances when horizon advances", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Weekly review",
@@ -360,7 +361,7 @@ describe("RecurrenceManager", () => {
 
     it("returns empty when horizon has not moved", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Task",
@@ -388,7 +389,7 @@ describe("RecurrenceManager", () => {
   describe("skipInstance", () => {
     it("creates a skip exception and cancels existing task", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Daily task",
@@ -426,7 +427,7 @@ describe("RecurrenceManager", () => {
     it("throws NotFoundError for non-existent instance", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
       (recurrenceRepo.getInstances as ReturnType<typeof vi.fn>).mockReturnValueOnce([]);
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       expect(() => manager.modifyInstance("nonexistent", "2026-04-14", { duration: 30 })).toThrow(
         NotFoundError,
@@ -435,7 +436,7 @@ describe("RecurrenceManager", () => {
 
     it("throws InvalidStateError when modifying completed instance", () => {
       const { recurrenceRepo, taskRepo, tasks } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       // Create a task that is completed
       const completedTask = makeTask({ id: "completed-task", status: "completed" });
@@ -461,7 +462,7 @@ describe("RecurrenceManager", () => {
   describe("deleteTemplate", () => {
     it("cancels future instances and deactivates template", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       const taskData = {
         title: "Daily task",
@@ -494,7 +495,7 @@ describe("RecurrenceManager", () => {
 
     it("throws NotFoundError for non-existent template", () => {
       const { recurrenceRepo, taskRepo } = createMocks();
-      const manager = new RecurrenceManager(recurrenceRepo, taskRepo);
+      const manager = new RecurrenceManager(recurrenceRepo, taskRepo, createNoOpLogger());
 
       expect(() => manager.deleteTemplate("nonexistent", new Date())).toThrow(NotFoundError);
     });

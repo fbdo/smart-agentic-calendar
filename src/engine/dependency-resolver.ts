@@ -1,5 +1,6 @@
 import type { Task } from "../models/task.js";
 import type { DependencyEdge } from "../models/dependency.js";
+import type { Logger } from "../common/logger.js";
 import { CircularDependencyError, ValidationError } from "../models/errors.js";
 
 const PRIORITY_RANK: Record<string, number> = {
@@ -75,6 +76,12 @@ function insertSorted(queue: Task[], task: Task): void {
 }
 
 export class DependencyResolver {
+  private readonly logger: Logger;
+
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
+
   validateNoCycles(taskId: string, dependsOnId: string, existingDeps: DependencyEdge[]): boolean {
     if (taskId === dependsOnId) {
       throw new ValidationError("a task cannot depend on itself");
@@ -114,7 +121,9 @@ export class DependencyResolver {
     while (stack.length > 0) {
       const current = stack.pop() as string;
       if (current === taskId) {
-        throw new CircularDependencyError([taskId, ...path, current]);
+        const cycle = [taskId, ...path, current];
+        this.logger.warning("dependencies", { event: "cycle_detected", cycle });
+        throw new CircularDependencyError(cycle);
       }
       if (visited.has(current)) {
         continue;
@@ -160,6 +169,7 @@ export class DependencyResolver {
 
     if (result.length < tasks.length) {
       const remainingIds = tasks.filter((t) => !result.includes(t)).map((t) => t.id);
+      this.logger.warning("dependencies", { event: "cycle_detected", cycle: remainingIds });
       throw new CircularDependencyError(remainingIds);
     }
 

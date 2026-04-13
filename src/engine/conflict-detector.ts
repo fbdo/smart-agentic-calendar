@@ -3,6 +3,7 @@ import type { TimeBlock } from "../models/schedule.js";
 import type { Availability } from "../models/config.js";
 import type { Conflict, DeprioritizationSuggestion } from "../models/conflict.js";
 import type { DependencyEdge } from "../models/dependency.js";
+import type { Logger } from "../common/logger.js";
 import { diffMinutes } from "../common/time.js";
 
 const PRIORITY_RANK: Record<string, number> = {
@@ -20,6 +21,11 @@ interface CompetingTask {
 }
 
 export class ConflictDetector {
+  private readonly logger: Logger;
+
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
   detectConflicts(
     tasks: Task[],
     timeBlocks: TimeBlock[],

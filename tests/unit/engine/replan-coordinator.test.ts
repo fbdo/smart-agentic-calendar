@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ReplanCoordinator } from "../../../src/engine/replan-coordinator.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 import type { Scheduler } from "../../../src/engine/scheduler.js";
 import type { ScheduleRepository } from "../../../src/storage/schedule-repository.js";
 import type { TaskRepository } from "../../../src/storage/task-repository.js";
@@ -58,6 +59,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -80,6 +82,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -99,6 +102,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     expect(coordinator.isReplanning()).toBe(false);
@@ -112,6 +116,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     expect(coordinator.getScheduleStatus()).toBe("up_to_date");
@@ -125,6 +130,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     await coordinator.awaitReplan();
@@ -140,6 +146,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -157,6 +164,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -174,6 +182,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -196,6 +205,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -225,6 +235,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -252,6 +263,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();
@@ -271,6 +283,7 @@ describe("ReplanCoordinator", () => {
       taskRepo,
       configRepo,
       recurrenceManager,
+      createNoOpLogger(),
     );
 
     coordinator.requestReplan();

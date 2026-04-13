@@ -4,6 +4,7 @@ import type { TaskRepository } from "../storage/task-repository.js";
 import type { ConfigRepository } from "../storage/config-repository.js";
 import type { RecurrenceManager } from "./recurrence-manager.js";
 import type { ScheduleStatus } from "../models/schedule.js";
+import type { Logger } from "../common/logger.js";
 
 export class ReplanCoordinator {
   private readonly scheduler: Scheduler;
@@ -11,6 +12,7 @@ export class ReplanCoordinator {
   private readonly taskRepo: TaskRepository;
   private readonly configRepo: ConfigRepository;
   private readonly recurrenceManager: RecurrenceManager;
+  private readonly logger: Logger;
 
   private dirty = false;
   private replanning = false;
@@ -23,12 +25,14 @@ export class ReplanCoordinator {
     taskRepo: TaskRepository,
     configRepo: ConfigRepository,
     recurrenceManager: RecurrenceManager,
+    logger: Logger,
   ) {
     this.scheduler = scheduler;
     this.scheduleRepo = scheduleRepo;
     this.taskRepo = taskRepo;
     this.configRepo = configRepo;
     this.recurrenceManager = recurrenceManager;
+    this.logger = logger;
   }
 
   requestReplan(): void {
@@ -77,6 +81,8 @@ export class ReplanCoordinator {
     this.replanning = true;
     this.scheduleRepo.setScheduleStatus("replan_in_progress");
 
+    this.logger.info("replan", "replan started");
+
     try {
       // Step 1: Expand recurrence horizon
       const preferences = this.configRepo.getPreferences();
@@ -92,6 +98,11 @@ export class ReplanCoordinator {
       // Step 3: Save results
       this.scheduleRepo.clearSchedule();
       this.scheduleRepo.saveSchedule(result.timeBlocks);
+
+      this.logger.info("replan", {
+        event: "replan_complete",
+        blocksCount: result.timeBlocks.length,
+      });
 
       // Step 4: Update task statuses — mark scheduled tasks
       const scheduledTaskIds = new Set(result.timeBlocks.map((b) => b.taskId));
@@ -111,8 +122,12 @@ export class ReplanCoordinator {
           this.taskRepo.updateStatus(atRisk.taskId, "at_risk");
         }
       }
-    } catch {
+    } catch (error) {
       // Graceful degradation: previous schedule preserved
+      this.logger.notice("replan", {
+        event: "replan_failed_graceful_degradation",
+        error: String(error),
+      });
     } finally {
       this.replanning = false;
       this.scheduleRepo.setScheduleStatus("up_to_date");
@@ -126,6 +141,7 @@ export class ReplanCoordinator {
 
       // If dirty again (mutation during replan), schedule another
       if (this.dirty) {
+        this.logger.debug("replan", "dirty during replan, scheduling another");
         this.pendingTimeout = setTimeout(() => this.executeReplan(), 0);
       }
     }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DependencyResolver } from "../../../src/engine/dependency-resolver.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 import type { Task } from "../../../src/models/task.js";
 import type { DependencyEdge } from "../../../src/models/dependency.js";
 import { CircularDependencyError, ValidationError } from "../../../src/models/errors.js";
@@ -24,7 +25,7 @@ function makeTask(overrides: Partial<Task> & { id: string }): Task {
 }
 
 describe("DependencyResolver", () => {
-  const resolver = new DependencyResolver();
+  const resolver = new DependencyResolver(createNoOpLogger());
 
   describe("validateNoCycles", () => {
     it("returns true when adding a valid dependency with no cycle", () => {
