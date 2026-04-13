@@ -3,14 +3,15 @@ import { Database } from "../../../src/storage/database.js";
 import { TaskRepository } from "../../../src/storage/task-repository.js";
 import type { Task, TaskStatus } from "../../../src/models/task.js";
 import { NotFoundError, InvalidStateError, ValidationError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("TaskRepository", () => {
   let db: Database;
   let repo: TaskRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new TaskRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new TaskRepository(db, createNoOpLogger());
   });
 
   afterEach(() => {

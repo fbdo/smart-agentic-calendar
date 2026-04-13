@@ -18,22 +18,26 @@ import { ScheduleTools } from "./mcp/tools/schedule-tools.js";
 import { AnalyticsTools } from "./mcp/tools/analytics-tools.js";
 import { ConfigTools } from "./mcp/tools/config-tools.js";
 import { McpServer } from "./mcp/server.js";
+import { createNoOpLogger } from "./common/logger.js";
 
 export function getDbPath(): string {
   return process.env.CALENDAR_DB_PATH ?? "./calendar.db";
 }
 
 export function createApp(dbPath: string) {
+  // 0. Logger (temporary no-op until Task 6 wires real logger)
+  const logger = createNoOpLogger();
+
   // 1. Database
-  const database = new Database(dbPath);
+  const database = new Database(dbPath, logger);
 
   // 2. Repositories
-  const taskRepo = new TaskRepository(database);
-  const eventRepo = new EventRepository(database);
-  const configRepo = new ConfigRepository(database);
-  const scheduleRepo = new ScheduleRepository(database);
-  const analyticsRepo = new AnalyticsRepository(database);
-  const recurrenceRepo = new RecurrenceRepository(database);
+  const taskRepo = new TaskRepository(database, logger);
+  const eventRepo = new EventRepository(database, logger);
+  const configRepo = new ConfigRepository(database, logger);
+  const scheduleRepo = new ScheduleRepository(database, logger);
+  const analyticsRepo = new AnalyticsRepository(database, logger);
+  const recurrenceRepo = new RecurrenceRepository(database, logger);
 
   // 3. Engine components
   const dependencyResolver = new DependencyResolver();

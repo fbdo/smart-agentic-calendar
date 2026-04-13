@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { Database } from "../../src/storage/database.js";
+import { createNoOpLogger } from "../../src/common/logger.js";
 
 let db: Database;
 
@@ -11,7 +12,7 @@ interface QueryPlanRow {
 }
 
 beforeAll(() => {
-  db = new Database(":memory:");
+  db = new Database(":memory:", createNoOpLogger());
 
   // Seed data for realistic query plans
   const insertTask = db.prepare(

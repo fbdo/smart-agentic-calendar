@@ -2,14 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { ConfigRepository } from "../../../src/storage/config-repository.js";
 import { ValidationError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("ConfigRepository", () => {
   let db: Database;
   let repo: ConfigRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new ConfigRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new ConfigRepository(db, createNoOpLogger());
   });
 
   afterEach(() => {

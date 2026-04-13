@@ -8,6 +8,7 @@ import { NotFoundError } from "../models/errors.js";
 import { generateId } from "../common/id.js";
 import { nowUTC } from "../common/time.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 interface TemplateRow {
   id: string;
@@ -36,9 +37,11 @@ type TemplateTaskData = RecurrenceTemplate["taskData"];
 
 export class RecurrenceRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   createTemplate(

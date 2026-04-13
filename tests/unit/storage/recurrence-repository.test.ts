@@ -2,14 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { RecurrenceRepository } from "../../../src/storage/recurrence-repository.js";
 import { NotFoundError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("RecurrenceRepository", () => {
   let db: Database;
   let repo: RecurrenceRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new RecurrenceRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new RecurrenceRepository(db, createNoOpLogger());
   });
 
   afterEach(() => {

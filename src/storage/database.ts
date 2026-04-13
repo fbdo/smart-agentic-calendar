@@ -1,4 +1,5 @@
 import BetterSqlite3 from "better-sqlite3";
+import type { Logger } from "../common/logger.js";
 
 type Migration = (db: BetterSqlite3.Database) => void;
 
@@ -139,7 +140,7 @@ const migrations: Record<number, Migration> = {
 
 export const LATEST_VERSION = Math.max(...Object.keys(migrations).map(Number));
 
-function runMigrations(db: BetterSqlite3.Database): void {
+function runMigrations(db: Database): void {
   const currentVersion = (db.pragma("user_version") as { user_version: number }[])[0].user_version;
 
   if (currentVersion >= LATEST_VERSION) {
@@ -156,14 +157,19 @@ function runMigrations(db: BetterSqlite3.Database): void {
       migration(db);
       db.pragma(`user_version = ${version}`);
     })();
+    db.logger.info("database", `applied migration ${version}`);
   }
 }
 
 export class Database extends BetterSqlite3 {
-  constructor(filename: string) {
+  readonly logger: Logger;
+
+  constructor(filename: string, logger: Logger) {
     super(filename);
+    this.logger = logger;
     this.pragma("journal_mode = WAL");
     this.pragma("foreign_keys = ON");
+    this.logger.debug("database", `opened ${filename}`);
     runMigrations(this);
   }
 }

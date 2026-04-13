@@ -2,14 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { ScheduleRepository } from "../../../src/storage/schedule-repository.js";
 import { generateId } from "../../../src/common/id.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("ScheduleRepository", () => {
   let db: Database;
   let repo: ScheduleRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new ScheduleRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new ScheduleRepository(db, createNoOpLogger());
     // Insert a task so FK constraint is satisfied
     db.prepare(
       "INSERT INTO tasks (id, title, duration, priority, status, tags, is_recurring, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

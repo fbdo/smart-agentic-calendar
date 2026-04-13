@@ -1,6 +1,7 @@
 import type { TimeBlock, ScheduleStatus } from "../models/schedule.js";
 import { nowUTC } from "../common/time.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 interface TimeBlockRow {
   id: string;
@@ -14,9 +15,11 @@ interface TimeBlockRow {
 
 export class ScheduleRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   saveSchedule(timeBlocks: TimeBlock[]): void {

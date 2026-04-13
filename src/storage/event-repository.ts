@@ -3,6 +3,7 @@ import { ValidationError, NotFoundError } from "../models/errors.js";
 import { generateId } from "../common/id.js";
 import { nowUTC } from "../common/time.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 interface EventRow {
   id: string;
@@ -20,9 +21,11 @@ type EventUpdates = Partial<Pick<Event, "title" | "startTime" | "endTime" | "isA
 
 export class EventRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   create(input: EventInput): Event {

@@ -1,6 +1,7 @@
 import type { Task } from "../models/task.js";
 import type { CompletedTaskRecord, DurationRecord, CategorySummary } from "../models/analytics.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 interface CompletedTaskRow {
   task_id: string;
@@ -44,9 +45,11 @@ interface TaskRow {
 
 export class AnalyticsRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   getCompletedTasks(start: string, end: string): CompletedTaskRecord[] {

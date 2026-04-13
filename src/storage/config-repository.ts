@@ -22,6 +22,7 @@ import {
   MAX_MINIMUM_BLOCK_MINUTES,
 } from "../common/constants.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 interface AvailabilityRow {
   day: number;
@@ -42,9 +43,11 @@ interface PreferenceRow {
 
 export class ConfigRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   getAvailability(): Availability {

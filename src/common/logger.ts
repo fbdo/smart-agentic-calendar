@@ -30,6 +30,7 @@ export interface Logger {
   emergency(logger: string, data: unknown): void;
 }
 
+// @public - will be used by composition root in Task 6
 export type LogTransport = (level: LoggingLevel, logger: string, data: unknown) => void;
 
 export class AppLogger implements Logger {

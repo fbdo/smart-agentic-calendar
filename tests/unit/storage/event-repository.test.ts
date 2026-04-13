@@ -2,14 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { EventRepository } from "../../../src/storage/event-repository.js";
 import { NotFoundError, ValidationError } from "../../../src/models/errors.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("EventRepository", () => {
   let db: Database;
   let repo: EventRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new EventRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new EventRepository(db, createNoOpLogger());
   });
 
   afterEach(() => {

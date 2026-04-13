@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { AnalyticsRepository } from "../../../src/storage/analytics-repository.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 let insertTaskCounter = 0;
 
@@ -41,8 +42,8 @@ describe("AnalyticsRepository", () => {
   let repo: AnalyticsRepository;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    repo = new AnalyticsRepository(db);
+    db = new Database(":memory:", createNoOpLogger());
+    repo = new AnalyticsRepository(db, createNoOpLogger());
   });
 
   afterEach(() => {

@@ -3,6 +3,7 @@ import { ValidationError, NotFoundError, InvalidStateError } from "../models/err
 import { generateId } from "../common/id.js";
 import { nowUTC, isValidISO8601 } from "../common/time.js";
 import type { Database } from "./database.js";
+import type { Logger } from "../common/logger.js";
 
 export interface TaskFilters {
   status?: TaskStatus;
@@ -45,9 +46,11 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 export class TaskRepository {
   private readonly db: Database;
+  private readonly logger: Logger;
 
-  constructor(db: Database) {
+  constructor(db: Database, logger: Logger) {
     this.db = db;
+    this.logger = logger;
   }
 
   create(input: TaskInput): Task {

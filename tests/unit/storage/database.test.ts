@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import BetterSqlite3 from "better-sqlite3";
 import { Database, LATEST_VERSION } from "../../../src/storage/database.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 describe("Database", () => {
   let db: Database;
 
   beforeEach(() => {
-    db = new Database(":memory:");
+    db = new Database(":memory:", createNoOpLogger());
   });
 
   afterEach(() => {
@@ -130,7 +131,7 @@ describe("Database", () => {
 
   describe("idempotent initialization", () => {
     it("can create a second Database on the same file without error", () => {
-      const db2 = new Database(":memory:");
+      const db2 = new Database(":memory:", createNoOpLogger());
       expect(db2).toBeDefined();
       db2.close();
     });
@@ -145,7 +146,7 @@ describe("Database", () => {
 
     it("skips migrations when already at latest version", () => {
       // Opening the same db again should not fail
-      const db2 = new Database(":memory:");
+      const db2 = new Database(":memory:", createNoOpLogger());
       const result = db2.pragma("user_version") as { user_version: number }[];
       expect(result[0].user_version).toBe(LATEST_VERSION);
       db2.close();
@@ -183,7 +184,7 @@ describe("Database", () => {
       raw.close();
 
       // Opening with our Database class should run all migrations from 0 → latest
-      const migrated = new Database(":memory:");
+      const migrated = new Database(":memory:", createNoOpLogger());
       const result = migrated.pragma("user_version") as { user_version: number }[];
       expect(result[0].user_version).toBe(LATEST_VERSION);
 
