@@ -118,6 +118,446 @@ CALENDAR_DB_PATH=/path/to/calendar.db npx -y @fbdo/smart-agentic-calendar
 
 The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
 
+## Usage Examples
+
+The examples below show natural-language prompts you would give to an AI agent (like Claude) connected to this MCP server, along with the tool calls the agent makes and the responses it receives. The agent interprets these responses and presents them conversationally — you never see raw JSON yourself.
+
+### 1. Configure Your Work Schedule
+
+> **You:** Set my work hours to Monday through Friday, 9 AM to 5 PM.
+
+The agent calls `set_availability`:
+
+```json
+{
+  "windows": [
+    { "day": 1, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 2, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 3, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 4, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 5, "start_time": "09:00", "end_time": "17:00" }
+  ]
+}
+```
+
+Response:
+
+```json
+{
+  "windows": [
+    { "day": 1, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 2, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 3, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 4, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 5, "start_time": "09:00", "end_time": "17:00" }
+  ],
+  "message": "Availability updated successfully"
+}
+```
+
+### 2. Protect Deep Work Time
+
+> **You:** I want focus time on Monday, Wednesday, and Friday mornings from 9 to 11 AM. Minimum 60-minute blocks.
+
+The agent calls `set_focus_time`:
+
+```json
+{
+  "blocks": [
+    { "day": 1, "start_time": "09:00", "end_time": "11:00" },
+    { "day": 3, "start_time": "09:00", "end_time": "11:00" },
+    { "day": 5, "start_time": "09:00", "end_time": "11:00" }
+  ],
+  "minimum_block_minutes": 60
+}
+```
+
+Response:
+
+```json
+{
+  "blocks": [
+    { "day": 1, "start_time": "09:00", "end_time": "11:00" },
+    { "day": 3, "start_time": "09:00", "end_time": "11:00" },
+    { "day": 5, "start_time": "09:00", "end_time": "11:00" }
+  ],
+  "minimum_block_minutes": 60,
+  "message": "Focus time updated successfully"
+}
+```
+
+### 3. Set Scheduling Preferences
+
+> **You:** I'd like 15-minute buffers between tasks, a 2-week scheduling horizon, and minimum 25-minute blocks.
+
+The agent calls `set_preferences`:
+
+```json
+{
+  "buffer_time_minutes": 15,
+  "default_priority": "P3",
+  "default_duration": 30,
+  "scheduling_horizon_weeks": 2,
+  "minimum_block_minutes": 25
+}
+```
+
+Response:
+
+```json
+{
+  "buffer_time_minutes": 15,
+  "default_priority": "P3",
+  "default_duration": 30,
+  "scheduling_horizon_weeks": 2,
+  "minimum_block_minutes": 25
+}
+```
+
+### 4. Review Your Full Configuration
+
+> **You:** Show me my current calendar settings.
+
+The agent calls `get_preferences` (no parameters):
+
+```json
+{
+  "availability": [
+    { "day": 1, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 2, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 3, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 4, "start_time": "09:00", "end_time": "17:00" },
+    { "day": 5, "start_time": "09:00", "end_time": "17:00" }
+  ],
+  "focus_time": {
+    "blocks": [
+      { "day": 1, "start_time": "09:00", "end_time": "11:00" },
+      { "day": 3, "start_time": "09:00", "end_time": "11:00" },
+      { "day": 5, "start_time": "09:00", "end_time": "11:00" }
+    ],
+    "minimum_block_minutes": 60
+  },
+  "preferences": {
+    "buffer_time_minutes": 15,
+    "default_priority": "P3",
+    "default_duration": 30,
+    "scheduling_horizon_weeks": 2,
+    "minimum_block_minutes": 25
+  }
+}
+```
+
+### 5. Create Tasks
+
+> **You:** I need to write the Q2 project proposal — it'll take about 2 hours, due Friday at 5 PM. High priority. Also, I need to prepare slides for the sprint demo by Thursday at 2 PM, about an hour of work.
+
+The agent calls `create_task` twice. First call:
+
+```json
+{
+  "title": "Write Q2 project proposal",
+  "description": "Draft the project proposal for the Q2 planning review",
+  "estimated_duration": 120,
+  "deadline": "2026-04-18T17:00:00Z",
+  "priority": "P1",
+  "category": "work",
+  "tags": ["planning", "writing"]
+}
+```
+
+Response:
+
+```json
+{
+  "task": {
+    "id": "a115d241-e8f8-4078-8ee5-7182ff04fa48",
+    "title": "Write Q2 project proposal",
+    "description": "Draft the project proposal for the Q2 planning review",
+    "estimated_duration": 120,
+    "deadline": "2026-04-18T17:00:00Z",
+    "priority": "P1",
+    "status": "pending",
+    "category": "work",
+    "tags": ["planning", "writing"],
+    "is_recurring": false,
+    "recurrence_template_id": null,
+    "actual_duration": null,
+    "created_at": "2026-04-13T08:36:22.887Z",
+    "updated_at": "2026-04-13T08:36:22.887Z"
+  }
+}
+```
+
+Second call:
+
+```json
+{
+  "title": "Prepare sprint demo",
+  "estimated_duration": 60,
+  "deadline": "2026-04-17T14:00:00Z",
+  "priority": "P2",
+  "category": "work",
+  "tags": ["presentation"]
+}
+```
+
+Response:
+
+```json
+{
+  "task": {
+    "id": "2f293125-8280-43d5-b183-f5be9e90e119",
+    "title": "Prepare sprint demo",
+    "estimated_duration": 60,
+    "deadline": "2026-04-17T14:00:00Z",
+    "priority": "P2",
+    "status": "pending",
+    "category": "work",
+    "tags": ["presentation"],
+    "is_recurring": false,
+    "recurrence_template_id": null,
+    "actual_duration": null,
+    "created_at": "2026-04-13T08:36:22.908Z",
+    "updated_at": "2026-04-13T08:36:22.908Z"
+  }
+}
+```
+
+Each `create_task` triggers a background replan — the scheduler automatically finds time slots for the new tasks.
+
+### 6. Create Events
+
+> **You:** Add a team standup on Monday at 2 PM for 30 minutes, and a sprint demo meeting on Thursday at 3 PM for an hour.
+
+The agent calls `create_event` twice. First call:
+
+```json
+{
+  "title": "Team standup",
+  "start_time": "2026-04-14T14:00:00Z",
+  "end_time": "2026-04-14T14:30:00Z"
+}
+```
+
+Response:
+
+```json
+{
+  "event": {
+    "id": "e76cbe94-2f7e-4f7a-9a09-29370370fdad",
+    "title": "Team standup",
+    "start_time": "2026-04-14T14:00:00Z",
+    "end_time": "2026-04-14T14:30:00Z",
+    "is_all_day": false,
+    "date": null,
+    "created_at": "2026-04-13T08:36:22.932Z",
+    "updated_at": "2026-04-13T08:36:22.932Z"
+  }
+}
+```
+
+Events block time on the calendar — the scheduler works around them when placing tasks.
+
+### 7. View Your Schedule
+
+> **You:** What does my week look like?
+
+The agent calls `get_schedule`:
+
+```json
+{
+  "start_date": "2026-04-14",
+  "end_date": "2026-04-18"
+}
+```
+
+Response:
+
+```json
+{
+  "schedule": [
+    {
+      "id": "12c6493f-7e4d-4c4a-8084-85fcc36eeea3",
+      "task_id": "a115d241-e8f8-4078-8ee5-7182ff04fa48",
+      "start_time": "2026-04-14T09:00:00.000Z",
+      "end_time": "2026-04-14T11:00:00.000Z",
+      "date": "2026-04-14",
+      "block_index": 0,
+      "total_blocks": 1,
+      "task_title": "Write Q2 project proposal",
+      "task_priority": "P1",
+      "task_category": "work",
+      "task_status": "scheduled"
+    },
+    {
+      "id": "0391fd94-6693-4139-812c-437b31988c12",
+      "task_id": "2f293125-8280-43d5-b183-f5be9e90e119",
+      "start_time": "2026-04-16T09:00:00.000Z",
+      "end_time": "2026-04-16T10:00:00.000Z",
+      "date": "2026-04-16",
+      "block_index": 0,
+      "total_blocks": 1,
+      "task_title": "Prepare sprint demo",
+      "task_priority": "P2",
+      "task_category": "work",
+      "task_status": "scheduled"
+    }
+  ],
+  "schedule_status": "up_to_date"
+}
+```
+
+The P1 proposal was placed in Monday's focus time block (9–11 AM), and the sprint demo prep was scheduled for Wednesday morning — both before their deadlines. The `schedule_status` field tells the agent whether the schedule reflects the latest changes.
+
+### 8. Complete a Task
+
+> **You:** I finished reviewing the pull requests. Took me about 35 minutes instead of the 45 I estimated.
+
+The agent calls `complete_task`:
+
+```json
+{
+  "task_id": "4acb7a3d-cc43-42cb-9aee-974b797d95ee",
+  "actual_duration_minutes": 35
+}
+```
+
+Response:
+
+```json
+{
+  "task": {
+    "id": "4acb7a3d-cc43-42cb-9aee-974b797d95ee",
+    "title": "Review pull requests",
+    "estimated_duration": 45,
+    "deadline": "2026-04-15T17:00:00Z",
+    "priority": "P2",
+    "status": "completed",
+    "category": "work",
+    "tags": ["code-review"],
+    "actual_duration": 35,
+    "created_at": "2026-04-13T08:36:22.899Z",
+    "updated_at": "2026-04-13T08:36:31.378Z"
+  }
+}
+```
+
+Recording actual duration feeds into estimation accuracy analytics. The scheduler replans in the background to reclaim the freed time.
+
+### 9. Check Schedule Health
+
+> **You:** How healthy is my schedule right now?
+
+The agent calls `get_schedule_health` (no parameters):
+
+```json
+{
+  "health_score": 90,
+  "utilization_percentage": 10,
+  "overdue_count": 0,
+  "at_risk_count": 0,
+  "free_hours_this_week": 36,
+  "busiest_day": "Tuesday",
+  "lightest_day": "Monday"
+}
+```
+
+The health score (0–100) is a composite of utilization, overdue tasks, and at-risk tasks. A score of 90 with zero at-risk items means the schedule is in good shape.
+
+### 10. View Productivity Stats
+
+> **You:** How productive have I been this week?
+
+The agent calls `get_productivity_stats`:
+
+```json
+{
+  "period": "week"
+}
+```
+
+Response:
+
+```json
+{
+  "period": "week",
+  "tasks_completed": 1,
+  "tasks_overdue": 2,
+  "tasks_cancelled": 0,
+  "completion_rate": 33.33,
+  "on_time_rate": 100
+}
+```
+
+### 11. Check Time Allocation
+
+> **You:** Where am I spending my time this week?
+
+The agent calls `get_time_allocation`:
+
+```json
+{
+  "period": "week"
+}
+```
+
+Response:
+
+```json
+{
+  "period": "week",
+  "categories": [
+    { "category": "work", "hours": 0.58, "percentage": 100 }
+  ]
+}
+```
+
+Time allocation breaks down scheduled hours by category, so you can see if your time distribution matches your priorities.
+
+### 12. Review Estimation Accuracy
+
+> **You:** How accurate are my time estimates?
+
+The agent calls `get_estimation_accuracy`:
+
+```json
+{
+  "period": "week"
+}
+```
+
+Response:
+
+```json
+{
+  "average_accuracy_percentage": 77.78,
+  "overestimate_count": 1,
+  "underestimate_count": 0,
+  "average_overestimate_minutes": 10,
+  "average_underestimate_minutes": null,
+  "accuracy_by_category": {
+    "work": 77.78
+  }
+}
+```
+
+This compares estimated vs. actual durations from completed tasks. In this case, the 45-minute estimate for PR review vs. 35 minutes actual shows a tendency to overestimate — useful feedback for calibrating future estimates.
+
+### 13. Check for Conflicts
+
+> **You:** Are there any scheduling conflicts I should worry about?
+
+The agent calls `get_conflicts` (no parameters):
+
+```json
+{
+  "conflicts": [],
+  "schedule_status": "up_to_date"
+}
+```
+
+An empty conflicts array means all tasks fit within available time before their deadlines. When conflicts exist, the response includes details about which tasks are at risk, why (insufficient time, dependency chains, or overdue), and suggestions for which lower-priority tasks to deprioritize to free up time.
+
 ## Logging
 
 The server has two independent logging channels, each with its own level filtering:
