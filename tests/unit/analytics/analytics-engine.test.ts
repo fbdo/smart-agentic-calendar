@@ -6,6 +6,7 @@ import type { ScheduleRepository } from "../../../src/storage/schedule-repositor
 import type { ConfigRepository } from "../../../src/storage/config-repository.js";
 import { ValidationError } from "../../../src/models/errors.js";
 import type { UserConfig } from "../../../src/models/config.js";
+import { createNoOpLogger } from "../../../src/common/logger.js";
 
 const defaultConfig: UserConfig = {
   availability: {
@@ -49,7 +50,13 @@ function createEngine() {
   } as unknown as ConfigRepository;
 
   return {
-    engine: new AnalyticsEngine(analyticsRepo, taskRepo, scheduleRepo, configRepo),
+    engine: new AnalyticsEngine(
+      analyticsRepo,
+      taskRepo,
+      scheduleRepo,
+      configRepo,
+      createNoOpLogger(),
+    ),
     analyticsRepo,
     taskRepo,
     scheduleRepo,

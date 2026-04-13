@@ -62,7 +62,13 @@ export function createApp(dbPath: string) {
   );
 
   // 4. Analytics
-  const analyticsEngine = new AnalyticsEngine(analyticsRepo, taskRepo, scheduleRepo, configRepo);
+  const analyticsEngine = new AnalyticsEngine(
+    analyticsRepo,
+    taskRepo,
+    scheduleRepo,
+    configRepo,
+    logger,
+  );
 
   // 5. MCP Tool handlers
   const taskTools = new TaskTools(
