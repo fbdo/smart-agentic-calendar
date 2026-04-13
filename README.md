@@ -41,11 +41,12 @@ This server communicates over **stdio** using the [Model Context Protocol](https
 
 ### Configuration
 
-The server accepts one environment variable:
+The server accepts the following environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CALENDAR_DB_PATH` | `./calendar.db` | Path to the SQLite database file |
+| `LOG_LEVEL` | `warning` | Minimum severity for stderr output (see [Logging](#logging)) |
 
 ### Claude Desktop
 
@@ -116,6 +117,71 @@ CALENDAR_DB_PATH=/path/to/calendar.db npx -y @fbdo/smart-agentic-calendar
 ```
 
 The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
+
+## Logging
+
+The server has two independent logging channels, each with its own level filtering:
+
+### stderr (for operators and developers)
+
+Controlled by the `LOG_LEVEL` environment variable. Set it to any [RFC 5424 syslog level](https://datatracker.ietf.org/doc/html/rfc5424#section-6.2.1):
+
+| Level | Severity | What you'll see |
+|-------|----------|----------------|
+| `debug` | 0 | Everything — slot scoring, task ordering, DB operations |
+| `info` | 1 | Significant operations — replan completed, server started, migrations applied |
+| `notice` | 2 | Noteworthy but normal — graceful degradation after replan failure |
+| `warning` | 3 | Potential issues — at-risk tasks, unknown tool invocations **(default)** |
+| `error` | 4 | Handled failures — unexpected errors in tool execution |
+| `critical` | 5 | Severe failures |
+| `alert` | 6 | Immediate action required |
+| `emergency` | 7 | System unusable — fatal startup errors |
+
+**Examples:**
+
+```bash
+# Full diagnostics (all log output to stderr)
+LOG_LEVEL=debug npx -y @fbdo/smart-agentic-calendar
+
+# Only errors and above
+LOG_LEVEL=error npx -y @fbdo/smart-agentic-calendar
+
+# Default (warning and above) — quiet operation
+npx -y @fbdo/smart-agentic-calendar
+```
+
+In your MCP client config, add `LOG_LEVEL` to the `env` block:
+
+```json
+{
+  "mcpServers": {
+    "smart-agentic-calendar": {
+      "command": "npx",
+      "args": ["-y", "@fbdo/smart-agentic-calendar"],
+      "env": {
+        "CALENDAR_DB_PATH": "/path/to/calendar.db",
+        "LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
+```
+
+### MCP protocol (for AI agents and MCP hosts)
+
+The server advertises the MCP `logging` capability. MCP clients can control which log messages they receive by sending a `logging/setLevel` request — the SDK filters automatically. Log messages are sent as `notifications/message` with structured data:
+
+```json
+{
+  "level": "info",
+  "logger": "replan",
+  "data": { "event": "replan_complete", "blocksCount": 12 }
+}
+```
+
+The `logger` field identifies the component: `database`, `scheduler`, `replan`, `conflicts`, `dependencies`, `recurrence`, `tools`, `mcp`.
+
+The two channels are independent — the MCP client can request `debug` while stderr stays at `warning`, or vice versa.
 
 ## MCP Tools
 
