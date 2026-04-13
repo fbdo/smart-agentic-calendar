@@ -20,6 +20,9 @@ Thumbs.db
 
 # SQLite databases
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 
@@ -37,3 +40,6 @@ report/
 
 # Dependency-cruiser output
 dependency-graph.*
+
+# Git worktrees
+.worktrees/
