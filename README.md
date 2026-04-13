@@ -57,7 +57,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "@fbdo/smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar@latest"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -75,7 +75,7 @@ Add to your project's `.mcp.json` or global `~/.claude/settings.json`:
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "@fbdo/smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar@latest"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -93,7 +93,7 @@ Add to `.cursor/mcp.json` in your project root:
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "@fbdo/smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar@latest"],
       "env": {
         "CALENDAR_DB_PATH": "/absolute/path/to/calendar.db"
       }
@@ -107,13 +107,13 @@ Add to `.cursor/mcp.json` in your project root:
 Spawn the server as a child process with stdio transport:
 
 ```bash
-npx -y @fbdo/smart-agentic-calendar
+npx -y @fbdo/smart-agentic-calendar@latest
 ```
 
 Or with a custom database path:
 
 ```bash
-CALENDAR_DB_PATH=/path/to/calendar.db npx -y @fbdo/smart-agentic-calendar
+CALENDAR_DB_PATH=/path/to/calendar.db npx -y @fbdo/smart-agentic-calendar@latest
 ```
 
 The server reads JSON-RPC messages from stdin and writes responses to stdout. Diagnostic messages go to stderr.
@@ -581,13 +581,13 @@ Controlled by the `LOG_LEVEL` environment variable. Set it to any [RFC 5424 sysl
 
 ```bash
 # Full diagnostics (all log output to stderr)
-LOG_LEVEL=debug npx -y @fbdo/smart-agentic-calendar
+LOG_LEVEL=debug npx -y @fbdo/smart-agentic-calendar@latest
 
 # Only errors and above
-LOG_LEVEL=error npx -y @fbdo/smart-agentic-calendar
+LOG_LEVEL=error npx -y @fbdo/smart-agentic-calendar@latest
 
 # Default (warning and above) — quiet operation
-npx -y @fbdo/smart-agentic-calendar
+npx -y @fbdo/smart-agentic-calendar@latest
 ```
 
 In your MCP client config, add `LOG_LEVEL` to the `env` block:
@@ -597,7 +597,7 @@ In your MCP client config, add `LOG_LEVEL` to the `env` block:
   "mcpServers": {
     "smart-agentic-calendar": {
       "command": "npx",
-      "args": ["-y", "@fbdo/smart-agentic-calendar"],
+      "args": ["-y", "@fbdo/smart-agentic-calendar@latest"],
       "env": {
         "CALENDAR_DB_PATH": "/path/to/calendar.db",
         "LOG_LEVEL": "debug"
