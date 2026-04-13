@@ -174,7 +174,7 @@ export class McpServer {
           },
           deadline: {
             type: "string",
-            description: "ISO 8601 UTC datetime (optional)",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T17:30:00Z (optional)",
           },
           priority: {
             type: "string",
@@ -212,8 +212,14 @@ export class McpServer {
           task_id: { type: "string", description: TASK_ID_DESCRIPTION },
           title: { type: "string" },
           description: { type: "string" },
-          estimated_duration: { type: "number" },
-          deadline: { type: "string" },
+          estimated_duration: {
+            type: "number",
+            description: "Duration in minutes (positive integer)",
+          },
+          deadline: {
+            type: "string",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T17:30:00Z",
+          },
           priority: { type: "string", enum: ["P1", "P2", "P3", "P4"] },
           category: { type: "string" },
           tags: { type: "array", items: { type: "string" } },
@@ -268,8 +274,14 @@ export class McpServer {
             enum: ["pending", "scheduled", "completed", "cancelled", "at_risk"],
           },
           priority: { type: "string", enum: ["P1", "P2", "P3", "P4"] },
-          deadline_before: { type: "string", description: "ISO 8601 datetime" },
-          deadline_after: { type: "string", description: "ISO 8601 datetime" },
+          deadline_before: {
+            type: "string",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T23:59:59Z",
+          },
+          deadline_after: {
+            type: "string",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T00:00:00Z",
+          },
           category: { type: "string" },
         },
       },
@@ -286,8 +298,16 @@ export class McpServer {
         type: "object",
         properties: {
           title: { type: "string", description: "Event title (required)" },
-          start_time: { type: "string", description: "ISO 8601 start (required for timed)" },
-          end_time: { type: "string", description: "ISO 8601 end (required for timed)" },
+          start_time: {
+            type: "string",
+            description:
+              "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T09:00:00Z (required for timed)",
+          },
+          end_time: {
+            type: "string",
+            description:
+              "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T10:00:00Z (required for timed)",
+          },
           is_all_day: { type: "boolean", description: "All-day event flag (optional)" },
           date: { type: "string", description: "YYYY-MM-DD date (required for all-day)" },
         },
@@ -304,10 +324,16 @@ export class McpServer {
         properties: {
           event_id: { type: "string", description: "Event ID (required)" },
           title: { type: "string" },
-          start_time: { type: "string" },
-          end_time: { type: "string" },
+          start_time: {
+            type: "string",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T09:00:00Z",
+          },
+          end_time: {
+            type: "string",
+            description: "ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T10:00:00Z",
+          },
           is_all_day: { type: "boolean" },
-          date: { type: "string" },
+          date: { type: "string", description: "YYYY-MM-DD format, e.g. 2026-06-01" },
         },
         required: ["event_id"],
       },
@@ -333,8 +359,14 @@ export class McpServer {
       inputSchema: {
         type: "object",
         properties: {
-          start_date: { type: "string", description: "Start date (required)" },
-          end_date: { type: "string", description: "End date (required)" },
+          start_date: {
+            type: "string",
+            description: "Start date in YYYY-MM-DD format, e.g. 2026-06-01 (required)",
+          },
+          end_date: {
+            type: "string",
+            description: "End date in YYYY-MM-DD format, e.g. 2026-06-07 (required)",
+          },
         },
         required: ["start_date", "end_date"],
       },
@@ -350,8 +382,14 @@ export class McpServer {
       inputSchema: {
         type: "object",
         properties: {
-          start_date: { type: "string", description: "Start date (required)" },
-          end_date: { type: "string", description: "End date (required)" },
+          start_date: {
+            type: "string",
+            description: "Start date in YYYY-MM-DD format, e.g. 2026-06-01 (required)",
+          },
+          end_date: {
+            type: "string",
+            description: "End date in YYYY-MM-DD format, e.g. 2026-06-07 (required)",
+          },
         },
         required: ["start_date", "end_date"],
       },
