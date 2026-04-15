@@ -684,38 +684,9 @@ Single-user, single-process, local-first. All data stored in a local SQLite data
 | Test Runner | [Vitest](https://vitest.dev/) |
 | Scheduling | Constraint satisfaction algorithm |
 
-## Development
+## Contributing
 
-This project follows **test-driven development** (red-green-refactor) with a healthy test pyramid and dependency injection for testability. Property-based tests are used for pure scheduling functions and serialization round-trips.
-
-### Prerequisites
-
-- Node.js >= 20
-
-### Install and Build
-
-```bash
-npm install
-npm run build
-```
-
-This compiles TypeScript to `dist/` and produces the runnable server at `dist/index.js`.
-
-### Test
-
-```bash
-npm test              # run all tests (578 tests)
-npm run test:watch    # watch mode
-npm run test:coverage # with coverage
-```
-
-### Quality Checks
-
-```bash
-npm run lint          # eslint
-npm run format:check  # prettier
-npm run quality       # all checks (lint, format, duplication, unused code, dependency rules, security)
-```
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs, requesting features, setting up your development environment, and submitting pull requests.
 
 ## License
 
