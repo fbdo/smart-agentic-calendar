@@ -199,8 +199,8 @@ export function validateCreateEventInput(input: CreateEventMcpInput): void {
 }
 
 function validateDateRange(input: { start_date: string; end_date: string }): void {
-  if (input.end_date <= input.start_date) {
-    throw new ValidationError("end_date must be after start_date");
+  if (input.end_date < input.start_date) {
+    throw new ValidationError("end_date must not be before start_date");
   }
 }
 

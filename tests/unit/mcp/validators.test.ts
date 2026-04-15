@@ -628,7 +628,13 @@ describe("validateListEventsInput", () => {
   it("throws for end_date before start_date", () => {
     expect(() =>
       validateListEventsInput({ start_date: "2026-04-10", end_date: "2026-04-09" }),
-    ).toThrow("end_date must be after start_date");
+    ).toThrow("end_date must not be before start_date");
+  });
+
+  it("accepts same-day date range", () => {
+    expect(() =>
+      validateListEventsInput({ start_date: "2026-04-10", end_date: "2026-04-10" }),
+    ).not.toThrow();
   });
 });
 
@@ -636,7 +642,13 @@ describe("validateGetScheduleInput", () => {
   it("throws for end_date before start_date", () => {
     expect(() =>
       validateGetScheduleInput({ start_date: "2026-04-10", end_date: "2026-04-09" }),
-    ).toThrow("end_date must be after start_date");
+    ).toThrow("end_date must not be before start_date");
+  });
+
+  it("accepts same-day date range", () => {
+    expect(() =>
+      validateGetScheduleInput({ start_date: "2026-04-10", end_date: "2026-04-10" }),
+    ).not.toThrow();
   });
 });
 
