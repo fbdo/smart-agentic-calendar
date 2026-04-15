@@ -1,5 +1,7 @@
 # Smart Agentic Calendar
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A local-first smart calendar MCP server for AI agents. Inspired by [Reclaim.ai](https://reclaim.ai/) and [Motion](https://www.usemotion.com/), it automatically re-plans tasks, recalculates the schedule, and helps AI agents act as personal scheduling assistants.
 
 ## Is This For You?
@@ -717,4 +719,4 @@ npm run quality       # all checks (lint, format, duplication, unused code, depe
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
