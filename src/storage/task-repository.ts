@@ -299,6 +299,14 @@ export class TaskRepository {
     return rows.map((row) => this.rowToTask(row));
   }
 
+  getAllDependencyEdges(): { taskId: string; dependsOnId: string }[] {
+    const rows = this.db.prepare("SELECT task_id, depends_on_id FROM dependencies").all() as {
+      task_id: string;
+      depends_on_id: string;
+    }[];
+    return rows.map((r) => ({ taskId: r.task_id, dependsOnId: r.depends_on_id }));
+  }
+
   recordActualDuration(id: string, actualMinutes: number): void {
     const result = this.db
       .prepare("UPDATE tasks SET actual_duration = ?, updated_at = ? WHERE id = ?")

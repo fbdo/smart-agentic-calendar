@@ -51,6 +51,7 @@ function createMocks() {
     findById: vi.fn().mockReturnValue(makeTask()),
     findAll: vi.fn().mockReturnValue([makeTask()]),
     getDependencies: vi.fn().mockReturnValue([]),
+    getAllDependencyEdges: vi.fn().mockReturnValue([]),
   } as unknown as TaskRepository;
 
   const configRepo = {

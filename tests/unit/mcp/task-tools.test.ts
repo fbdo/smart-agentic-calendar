@@ -43,6 +43,7 @@ function createMocks() {
     removeDependency: vi.fn(),
     getDependencies: vi.fn().mockReturnValue([]),
     getDependents: vi.fn().mockReturnValue([]),
+    getAllDependencyEdges: vi.fn().mockReturnValue([]),
     recordActualDuration: vi.fn(),
   } as unknown as TaskRepository;
 
@@ -173,6 +174,20 @@ describe("TaskTools", () => {
       (taskRepo.findById as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
 
       expect(() => tools.updateTask({ task_id: "missing", title: "X" })).toThrow(NotFoundError);
+    });
+
+    it("with blocked_by: uses single query for all dependency edges instead of N+1", () => {
+      const { tools, taskRepo } = createMocks();
+      const tasks = [makeTask({ id: "t-1" }), makeTask({ id: "t-2" }), makeTask({ id: "t-3" })];
+      (taskRepo.findAll as ReturnType<typeof vi.fn>).mockReturnValue(tasks);
+      (taskRepo.findById as ReturnType<typeof vi.fn>).mockReturnValue(makeTask());
+      (taskRepo.getDependencies as ReturnType<typeof vi.fn>).mockReturnValue([]);
+      (taskRepo.getAllDependencyEdges as ReturnType<typeof vi.fn>).mockReturnValue([]);
+
+      tools.updateTask({ task_id: "t-1", blocked_by: ["t-2"] });
+
+      // Should use getAllDependencyEdges (single query) instead of getDependencies per task
+      expect(taskRepo.getAllDependencyEdges).toHaveBeenCalledTimes(1);
     });
 
     it("with blocked_by: replaces dependencies, validates no cycles", () => {

@@ -78,7 +78,7 @@ export class ScheduleTools {
 
     const allTasks = this.taskRepo.findAll();
     const availability = this.configRepo.getAvailability();
-    const allDeps = this.buildDependencyEdges(allTasks);
+    const allDeps = this.buildDependencyEdges();
     const conflicts = this.conflictDetector.detectConflicts(
       allTasks,
       timeBlocks,
@@ -108,7 +108,7 @@ export class ScheduleTools {
       horizonEnd.toISOString(),
     );
     const availability = this.configRepo.getAvailability();
-    const allDeps = this.buildDependencyEdges(allTasks);
+    const allDeps = this.buildDependencyEdges();
     const conflicts = this.conflictDetector.detectConflicts(
       allTasks,
       timeBlocks,
@@ -152,14 +152,7 @@ export class ScheduleTools {
     });
   }
 
-  private buildDependencyEdges(tasks: Task[]): DependencyEdge[] {
-    const edges: DependencyEdge[] = [];
-    for (const task of tasks) {
-      const deps = this.taskRepo.getDependencies(task.id);
-      for (const dep of deps) {
-        edges.push({ taskId: task.id, dependsOnId: dep.id });
-      }
-    }
-    return edges;
+  private buildDependencyEdges(): DependencyEdge[] {
+    return this.taskRepo.getAllDependencyEdges();
   }
 }

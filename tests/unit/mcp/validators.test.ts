@@ -555,6 +555,12 @@ describe("validateUpdateTaskInput", () => {
   it("does not throw when at least one update field present", () => {
     expect(() => validateUpdateTaskInput({ task_id: "abc", title: "New" })).not.toThrow();
   });
+
+  it("throws for invalid deadline format", () => {
+    expect(() => validateUpdateTaskInput({ task_id: "abc", deadline: "next friday" })).toThrow(
+      "deadline must be a valid ISO 8601 date",
+    );
+  });
 });
 
 describe("validateCompleteTaskInput", () => {
@@ -622,6 +628,12 @@ describe("validateCreateEventInput", () => {
       }),
     ).not.toThrow();
   });
+
+  it("throws for invalid all-day date format", () => {
+    expect(() =>
+      validateCreateEventInput({ title: "Holiday", is_all_day: true, date: "not-a-date" }),
+    ).toThrow("date must be a valid YYYY-MM-DD date");
+  });
 });
 
 describe("validateListEventsInput", () => {
@@ -636,6 +648,18 @@ describe("validateListEventsInput", () => {
       validateListEventsInput({ start_date: "2026-04-10", end_date: "2026-04-10" }),
     ).not.toThrow();
   });
+
+  it("throws for invalid start_date format", () => {
+    expect(() =>
+      validateListEventsInput({ start_date: "not-a-date", end_date: "2026-04-10" }),
+    ).toThrow("start_date must be a valid YYYY-MM-DD date");
+  });
+
+  it("throws for invalid end_date format", () => {
+    expect(() =>
+      validateListEventsInput({ start_date: "2026-04-10", end_date: "garbage" }),
+    ).toThrow("end_date must be a valid YYYY-MM-DD date");
+  });
 });
 
 describe("validateGetScheduleInput", () => {
@@ -649,6 +673,18 @@ describe("validateGetScheduleInput", () => {
     expect(() =>
       validateGetScheduleInput({ start_date: "2026-04-10", end_date: "2026-04-10" }),
     ).not.toThrow();
+  });
+
+  it("throws for invalid start_date format", () => {
+    expect(() =>
+      validateGetScheduleInput({ start_date: "tomorrow", end_date: "2026-04-10" }),
+    ).toThrow("start_date must be a valid YYYY-MM-DD date");
+  });
+
+  it("throws for invalid end_date format", () => {
+    expect(() =>
+      validateGetScheduleInput({ start_date: "2026-04-10", end_date: "2026-13-01" }),
+    ).toThrow("end_date must be a valid YYYY-MM-DD date");
   });
 });
 

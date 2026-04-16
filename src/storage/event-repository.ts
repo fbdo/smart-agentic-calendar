@@ -100,6 +100,9 @@ export class EventRepository {
   findInRange(start: string, end: string): Event[] {
     const startDate = start.substring(0, 10);
     const endDate = end.substring(0, 10);
+    // Expand YYYY-MM-DD to full-day ISO boundaries for timed event comparison
+    const rangeStart = start.length <= 10 ? `${start}T00:00:00.000Z` : start;
+    const rangeEnd = end.length <= 10 ? `${end}T23:59:59.999Z` : end;
 
     const rows = this.db
       .prepare(
@@ -111,7 +114,7 @@ export class EventRepository {
          ORDER BY
            CASE WHEN is_all_day = 1 THEN date ELSE start_time END ASC`,
       )
-      .all(end, start, startDate, endDate) as EventRow[];
+      .all(rangeEnd, rangeStart, startDate, endDate) as EventRow[];
 
     return rows.map((row) => this.rowToEvent(row));
   }

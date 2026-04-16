@@ -20,7 +20,7 @@ import {
   MIN_MINIMUM_BLOCK_MINUTES,
   MAX_MINIMUM_BLOCK_MINUTES,
 } from "../common/constants.js";
-import { isValidISO8601, isValidTimeHHMM } from "../common/time.js";
+import { isValidISO8601, isValidTimeHHMM, isValidDateYYYYMMDD } from "../common/time.js";
 
 const INVALID_PRIORITY_MESSAGE = "invalid priority: must be P1, P2, P3, or P4";
 const END_BEFORE_START_MESSAGE = "end time must be after start time";
@@ -167,6 +167,9 @@ export function validateUpdateTaskInput(input: UpdateTaskMcpInput): void {
   if (input.priority !== undefined && !VALID_PRIORITIES.includes(input.priority as TaskPriority)) {
     throw new ValidationError(INVALID_PRIORITY_MESSAGE);
   }
+  if (input.deadline !== undefined && !isValidISO8601(input.deadline)) {
+    throw new ValidationError("deadline must be a valid ISO 8601 date");
+  }
 }
 
 export function validateCompleteTaskInput(input: CompleteTaskMcpInput): void {
@@ -185,6 +188,9 @@ export function validateCreateEventInput(input: CreateEventMcpInput): void {
   if (input.is_all_day) {
     if (!input.date) {
       throw new ValidationError("date is required for all-day events");
+    }
+    if (!isValidDateYYYYMMDD(input.date)) {
+      throw new ValidationError("date must be a valid YYYY-MM-DD date");
     }
   } else {
     if (!input.start_time) {
@@ -216,6 +222,12 @@ export function validateUpdateEventInput(input: UpdateEventMcpInput): void {
 }
 
 function validateDateRange(input: { start_date: string; end_date: string }): void {
+  if (!isValidDateYYYYMMDD(input.start_date)) {
+    throw new ValidationError("start_date must be a valid YYYY-MM-DD date");
+  }
+  if (!isValidDateYYYYMMDD(input.end_date)) {
+    throw new ValidationError("end_date must be a valid YYYY-MM-DD date");
+  }
   if (input.end_date < input.start_date) {
     throw new ValidationError("end_date must not be before start_date");
   }

@@ -292,8 +292,28 @@ describe("ReplanCoordinator", () => {
     // Should NOT have cleared or saved schedule
     expect(scheduleRepo.clearSchedule).not.toHaveBeenCalled();
     expect(scheduleRepo.saveSchedule).not.toHaveBeenCalled();
-    // Status should return to up_to_date
+  });
+
+  it("does NOT set status to up_to_date after replan failure", async () => {
+    const { scheduler, scheduleRepo, taskRepo, configRepo, recurrenceManager } = createMocks();
+    (scheduler.generateSchedule as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error("scheduling failed");
+    });
+    const coordinator = new ReplanCoordinator(
+      scheduler,
+      scheduleRepo,
+      taskRepo,
+      configRepo,
+      recurrenceManager,
+      createNoOpLogger(),
+    );
+
+    coordinator.requestReplan();
+    await vi.advanceTimersToNextTimerAsync();
+
+    // After failure, the schedule is stale — status must NOT be up_to_date
     const calls = (scheduleRepo.setScheduleStatus as ReturnType<typeof vi.fn>).mock.calls;
-    expect(calls[calls.length - 1][0]).toBe("up_to_date");
+    const lastStatus = calls[calls.length - 1][0];
+    expect(lastStatus).not.toBe("up_to_date");
   });
 });

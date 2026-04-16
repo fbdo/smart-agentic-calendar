@@ -121,8 +121,8 @@ describe("MCP Tools → Storage Round-Trip", () => {
     const eventId = created.event.id;
 
     const listed = app.eventTools.listEvents({
-      start_date: "2026-04-15T00:00:00Z",
-      end_date: "2026-04-15T23:59:59Z",
+      start_date: "2026-04-15",
+      end_date: "2026-04-15",
     });
     expect(listed.count).toBe(1);
     expect(listed.events[0].id).toBe(eventId);
@@ -137,8 +137,8 @@ describe("MCP Tools → Storage Round-Trip", () => {
     });
 
     const listed = app.eventTools.listEvents({
-      start_date: "2026-04-19T00:00:00Z",
-      end_date: "2026-04-21T00:00:00Z",
+      start_date: "2026-04-19",
+      end_date: "2026-04-21",
     });
     expect(listed.count).toBe(1);
     expect(listed.events[0].title).toBe("Company holiday");

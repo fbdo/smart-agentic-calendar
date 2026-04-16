@@ -227,15 +227,6 @@ export class TaskTools {
   }
 
   private buildDependencyEdges(): DependencyEdge[] {
-    // Build dependency edges by iterating all tasks
-    const tasks = this.taskRepo.findAll();
-    const edges: DependencyEdge[] = [];
-    for (const task of tasks) {
-      const deps = this.taskRepo.getDependencies(task.id);
-      for (const dep of deps) {
-        edges.push({ taskId: task.id, dependsOnId: dep.id });
-      }
-    }
-    return edges;
+    return this.taskRepo.getAllDependencyEdges();
   }
 }

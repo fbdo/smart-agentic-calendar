@@ -120,8 +120,8 @@ describe("CRUD Response Time (NFR-1.2)", () => {
 
     const start = performance.now();
     app.scheduleTools.getSchedule({
-      start_date: now.toISOString(),
-      end_date: end.toISOString(),
+      start_date: now.toISOString().slice(0, 10),
+      end_date: end.toISOString().slice(0, 10),
     });
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(100 * CI_MULTIPLIER);

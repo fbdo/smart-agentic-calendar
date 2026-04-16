@@ -79,6 +79,7 @@ export class ReplanCoordinator {
 
     this.dirty = false;
     this.replanning = true;
+    let succeeded = false;
     this.scheduleRepo.setScheduleStatus("replan_in_progress");
 
     this.logger.info("replan", "replan started");
@@ -122,15 +123,19 @@ export class ReplanCoordinator {
           this.taskRepo.updateStatus(atRisk.taskId, "at_risk");
         }
       }
+
+      succeeded = true;
     } catch (error) {
-      // Graceful degradation: previous schedule preserved
+      // Graceful degradation: previous schedule preserved, status stays stale
       this.logger.notice("replan", {
         event: "replan_failed_graceful_degradation",
         error: String(error),
       });
     } finally {
       this.replanning = false;
-      this.scheduleRepo.setScheduleStatus("up_to_date");
+      if (succeeded) {
+        this.scheduleRepo.setScheduleStatus("up_to_date");
+      }
 
       // Resolve any awaitReplan promises
       const callbacks = this.awaitCallbacks;

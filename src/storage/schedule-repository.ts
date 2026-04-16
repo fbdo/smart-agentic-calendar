@@ -42,11 +42,13 @@ export class ScheduleRepository {
   }
 
   getSchedule(start: string, end: string): TimeBlock[] {
+    const rangeStart = start.length <= 10 ? `${start}T00:00:00.000Z` : start;
+    const rangeEnd = end.length <= 10 ? `${end}T23:59:59.999Z` : end;
     const rows = this.db
       .prepare(
         "SELECT * FROM time_blocks WHERE start_time < ? AND end_time > ? ORDER BY start_time ASC",
       )
-      .all(end, start) as TimeBlockRow[];
+      .all(rangeEnd, rangeStart) as TimeBlockRow[];
 
     return rows.map((row) => this.rowToTimeBlock(row));
   }
