@@ -19,6 +19,14 @@ interface EventRow {
 type EventInput = Omit<Event, "id" | "createdAt" | "updatedAt">;
 type EventUpdates = Partial<Pick<Event, "title" | "startTime" | "endTime" | "isAllDay" | "date">>;
 
+const UPDATABLE_EVENT_COLUMNS: Record<keyof EventUpdates, string> = {
+  title: "title",
+  startTime: "start_time",
+  endTime: "end_time",
+  isAllDay: "is_all_day",
+  date: "date",
+};
+
 export class EventRepository {
   private readonly db: Database;
   private readonly logger: Logger;
@@ -112,25 +120,18 @@ export class EventRepository {
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
-    if (updates.title !== undefined) {
-      setClauses.push("title = ?");
-      params.push(updates.title.trim());
-    }
-    if (updates.startTime !== undefined) {
-      setClauses.push("start_time = ?");
-      params.push(updates.startTime);
-    }
-    if (updates.endTime !== undefined) {
-      setClauses.push("end_time = ?");
-      params.push(updates.endTime);
-    }
-    if (updates.isAllDay !== undefined) {
-      setClauses.push("is_all_day = ?");
-      params.push(updates.isAllDay ? 1 : 0);
-    }
-    if (updates.date !== undefined) {
-      setClauses.push("date = ?");
-      params.push(updates.date);
+    for (const [key, column] of Object.entries(UPDATABLE_EVENT_COLUMNS)) {
+      const value = updates[key as keyof EventUpdates];
+      if (value !== undefined) {
+        setClauses.push(`${column} = ?`);
+        if (key === "title") {
+          params.push((value as string).trim());
+        } else if (key === "isAllDay") {
+          params.push(value ? 1 : 0);
+        } else {
+          params.push(value);
+        }
+      }
     }
 
     setClauses.push("updated_at = ?");

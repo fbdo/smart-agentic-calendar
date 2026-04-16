@@ -88,6 +88,38 @@ describe("DependencyResolver", () => {
       // Adding A depends on D would create a cycle
       expect(() => resolver.validateNoCycles("A", "D", edges)).toThrow(CircularDependencyError);
     });
+
+    it("reports only nodes in the actual cycle path, not unrelated branches", () => {
+      // dependsOnMap for W: W depends on [Z, Y]
+      // dependsOnMap for Z: Z depends on [X]
+      // dependsOnMap for X: X depends on [A]
+      // dependsOnMap for Y: Y depends on [DEAD_END]
+      // DFS from W looking for A: stack starts [W]
+      // pop W → push Z, Y → stack [Z, Y]
+      // pop Y → push DEAD_END → stack [Z, DEAD_END]
+      // pop DEAD_END → no neighbors → stack [Z]
+      // pop Z → push X → stack [X]
+      // pop X → push A → found!
+      // With the bug, path = [W, Y, DEAD_END, Z, X] — includes Y and DEAD_END
+      // Correct path should only be: A → W → Z → X → A
+      const edges: DependencyEdge[] = [
+        { taskId: "W", dependsOnId: "Z" },
+        { taskId: "W", dependsOnId: "Y" },
+        { taskId: "Z", dependsOnId: "X" },
+        { taskId: "X", dependsOnId: "A" },
+        { taskId: "Y", dependsOnId: "DEAD_END" },
+      ];
+      try {
+        resolver.validateNoCycles("A", "W", edges);
+        expect.unreachable("should have thrown");
+      } catch (e) {
+        expect(e).toBeInstanceOf(CircularDependencyError);
+        const msg = (e as CircularDependencyError).message;
+        // DEAD_END and Y are on a different branch — must not appear in cycle
+        expect(msg).not.toContain("DEAD_END");
+        expect(msg).not.toContain("Y");
+      }
+    });
   });
 
   describe("topologicalSort", () => {

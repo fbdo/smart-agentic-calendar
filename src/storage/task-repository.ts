@@ -36,6 +36,16 @@ interface TaskRow {
   updated_at: string;
 }
 
+const UPDATABLE_TASK_COLUMNS: Record<keyof TaskUpdates, string> = {
+  title: "title",
+  description: "description",
+  duration: "duration",
+  deadline: "deadline",
+  priority: "priority",
+  category: "category",
+  tags: "tags",
+};
+
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ["scheduled", "cancelled", "at_risk"],
   scheduled: ["completed", "cancelled", "at_risk", "pending"],
@@ -145,7 +155,8 @@ export class TaskRepository {
         CASE priority WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 WHEN 'P4' THEN 4 END ASC,
         CASE WHEN deadline IS NULL THEN 1 ELSE 0 END ASC,
         deadline ASC,
-        created_at ASC`;
+        created_at ASC
+      LIMIT 1000`;
 
     const rows = this.db.prepare(sql).all(...params) as TaskRow[];
     return rows.map((row) => this.rowToTask(row));
@@ -163,33 +174,18 @@ export class TaskRepository {
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
-    if (updates.title !== undefined) {
-      setClauses.push("title = ?");
-      params.push(updates.title.trim());
-    }
-    if (updates.description !== undefined) {
-      setClauses.push("description = ?");
-      params.push(updates.description);
-    }
-    if (updates.duration !== undefined) {
-      setClauses.push("duration = ?");
-      params.push(updates.duration);
-    }
-    if (updates.deadline !== undefined) {
-      setClauses.push("deadline = ?");
-      params.push(updates.deadline);
-    }
-    if (updates.priority !== undefined) {
-      setClauses.push("priority = ?");
-      params.push(updates.priority);
-    }
-    if (updates.category !== undefined) {
-      setClauses.push("category = ?");
-      params.push(updates.category);
-    }
-    if (updates.tags !== undefined) {
-      setClauses.push("tags = ?");
-      params.push(JSON.stringify(updates.tags));
+    for (const [key, column] of Object.entries(UPDATABLE_TASK_COLUMNS)) {
+      const value = updates[key as keyof TaskUpdates];
+      if (value !== undefined) {
+        setClauses.push(`${column} = ?`);
+        if (key === "tags") {
+          params.push(JSON.stringify(value));
+        } else if (key === "title") {
+          params.push((value as string).trim());
+        } else {
+          params.push(value);
+        }
+      }
     }
 
     const now = nowUTC();

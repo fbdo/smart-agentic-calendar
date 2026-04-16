@@ -115,28 +115,44 @@ export class DependencyResolver {
 
     // DFS from dependsOnId, following "dependsOn" edges, looking for taskId
     const visited = new Set<string>();
+    const parent = new Map<string, string | null>();
     const stack = [dependsOnId];
-    const path: string[] = [];
+    parent.set(dependsOnId, null);
 
     while (stack.length > 0) {
       const current = stack.pop() as string;
       if (current === taskId) {
-        const cycle = [taskId, ...path, current];
-        this.logger.warning("dependencies", { event: "cycle_detected", cycle });
-        throw new CircularDependencyError(cycle);
+        const cyclePath = this.reconstructCyclePath(current, parent, taskId);
+        this.logger.warning("dependencies", { event: "cycle_detected", cycle: cyclePath });
+        throw new CircularDependencyError(cyclePath);
       }
-      if (visited.has(current)) {
-        continue;
-      }
+      if (visited.has(current)) continue;
       visited.add(current);
-      path.push(current);
-      const neighbors = dependsOnMap.get(current) ?? [];
-      for (const neighbor of neighbors) {
-        stack.push(neighbor);
+      for (const neighbor of dependsOnMap.get(current) ?? []) {
+        if (!visited.has(neighbor)) {
+          parent.set(neighbor, current);
+          stack.push(neighbor);
+        }
       }
     }
 
     return true;
+  }
+
+  private reconstructCyclePath(
+    current: string,
+    parent: Map<string, string | null>,
+    taskId: string,
+  ): string[] {
+    const path: string[] = [current];
+    let node = parent.get(current) ?? null;
+    while (node != null) {
+      path.push(node);
+      node = parent.get(node) ?? null;
+    }
+    path.push(taskId);
+    path.reverse();
+    return path;
   }
 
   topologicalSort(tasks: Task[], dependencies: DependencyEdge[]): Task[] {

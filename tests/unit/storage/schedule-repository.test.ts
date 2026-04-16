@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { ScheduleRepository } from "../../../src/storage/schedule-repository.js";
 import { generateId } from "../../../src/common/id.js";
@@ -63,7 +63,7 @@ describe("ScheduleRepository", () => {
       expect(blocks[0].taskId).toBe("task-1");
     });
 
-    it("replaces existing schedule", () => {
+    it("replaces existing schedule when clearSchedule is called first", () => {
       repo.saveSchedule([
         {
           id: generateId(),
@@ -75,6 +75,7 @@ describe("ScheduleRepository", () => {
           totalBlocks: 1,
         },
       ]);
+      repo.clearSchedule();
       repo.saveSchedule([
         {
           id: generateId(),
@@ -192,6 +193,36 @@ describe("ScheduleRepository", () => {
 
       const blocks = repo.getSchedule("2026-04-10T00:00:00.000Z", "2026-04-11T00:00:00.000Z");
       expect(blocks).toEqual([]);
+    });
+  });
+
+  describe("saveSchedule — no redundant DELETE", () => {
+    it("does not DELETE FROM time_blocks inside saveSchedule (caller is responsible for clearing)", () => {
+      const execSpy = vi.spyOn(db, "exec");
+      const prepareSpy = vi.spyOn(db, "prepare");
+
+      repo.saveSchedule([
+        {
+          id: generateId(),
+          taskId: "task-1",
+          startTime: "2026-04-10T09:00:00.000Z",
+          endTime: "2026-04-10T10:00:00.000Z",
+          date: "2026-04-10",
+          blockIndex: 0,
+          totalBlocks: 1,
+        },
+      ]);
+
+      // saveSchedule should only INSERT, not DELETE
+      const allSql = [
+        ...execSpy.mock.calls.map((c) => c[0]),
+        ...prepareSpy.mock.calls.map((c) => c[0]),
+      ].filter((sql) => typeof sql === "string");
+
+      const deleteInSave = allSql.filter((sql) =>
+        (sql as string).includes("DELETE FROM time_blocks"),
+      );
+      expect(deleteInSave).toHaveLength(0);
     });
   });
 });

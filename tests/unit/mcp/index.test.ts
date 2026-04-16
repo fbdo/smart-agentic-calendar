@@ -40,4 +40,32 @@ describe("Composition root", () => {
       }
     }
   });
+
+  it("getDbPath rejects path traversal sequences", () => {
+    const original = process.env.CALENDAR_DB_PATH;
+    process.env.CALENDAR_DB_PATH = "/some/path/../../etc/calendar.db";
+    try {
+      expect(() => getDbPath()).toThrow();
+    } finally {
+      if (original !== undefined) {
+        process.env.CALENDAR_DB_PATH = original;
+      } else {
+        delete process.env.CALENDAR_DB_PATH;
+      }
+    }
+  });
+
+  it("getDbPath rejects empty string", () => {
+    const original = process.env.CALENDAR_DB_PATH;
+    process.env.CALENDAR_DB_PATH = "";
+    try {
+      expect(() => getDbPath()).toThrow();
+    } finally {
+      if (original !== undefined) {
+        process.env.CALENDAR_DB_PATH = original;
+      } else {
+        delete process.env.CALENDAR_DB_PATH;
+      }
+    }
+  });
 });

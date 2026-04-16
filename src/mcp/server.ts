@@ -123,6 +123,15 @@ export class McpServer {
 
   private registerTaskTools(t: TaskTools): void {
     this.registerTool(
+      "get_task",
+      "Retrieve a task by ID. No replan triggered.",
+      z.object({
+        task_id: z.string().describe(TASK_ID_DESCRIPTION),
+      }),
+      (input) => t.getTask(input as { task_id: string }),
+    );
+
+    this.registerTool(
       "create_task",
       "Create a new task. Triggers background schedule replan. Required: title, estimated_duration. Optional: description, deadline, priority (P1-P4, default P3), category, tags, recurrence_rule, blocked_by.",
       z.object({

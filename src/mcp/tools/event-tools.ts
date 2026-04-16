@@ -4,6 +4,7 @@ import type { Logger } from "../../common/logger.js";
 import { NotFoundError } from "../../models/errors.js";
 import {
   validateCreateEventInput,
+  validateUpdateEventInput,
   validateListEventsInput,
   mapCreateEventInput,
   mapUpdateEventInput,
@@ -35,6 +36,7 @@ export class EventTools {
   }
 
   updateEvent(input: UpdateEventMcpInput) {
+    validateUpdateEventInput(input);
     const { id, updates } = mapUpdateEventInput(input);
 
     const event = this.eventRepo.findById(id);

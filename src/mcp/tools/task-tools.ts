@@ -41,6 +41,17 @@ export class TaskTools {
     this.logger = logger;
   }
 
+  getTask(input: { task_id?: string }) {
+    if (!input.task_id) {
+      throw new NotFoundError("task", "");
+    }
+    const task = this.taskRepo.findById(input.task_id);
+    if (!task) {
+      throw new NotFoundError("task", input.task_id);
+    }
+    return { task: mapTaskOutput(task) };
+  }
+
   createTask(input: CreateTaskMcpInput) {
     validateCreateTaskInput(input);
     const { taskData, recurrenceRule, blockedBy } = mapCreateTaskInput(input);

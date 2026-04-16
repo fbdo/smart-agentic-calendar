@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Database } from "../../../src/storage/database.js";
 import { TaskRepository } from "../../../src/storage/task-repository.js";
 import type { Task, TaskStatus } from "../../../src/models/task.js";
@@ -904,6 +904,51 @@ describe("TaskRepository", () => {
       expect(dependents).toHaveLength(2);
       const titles = dependents.map((d) => d.title).sort((a, b) => a.localeCompare(b));
       expect(titles).toEqual(["Dependent 1", "Dependent 2"]);
+    });
+  });
+
+  describe("update — SQL safety", () => {
+    it("uses only parameterized values, never interpolates field values into SQL", () => {
+      const task = repo.create({
+        title: "Original",
+        description: null,
+        duration: 30,
+        deadline: null,
+        priority: "P3",
+        category: null,
+        tags: [],
+        isRecurring: false,
+        recurrenceTemplateId: null,
+      });
+
+      const prepareSpy = vi.spyOn(db, "prepare");
+      repo.update(task.id, { title: "Robert'; DROP TABLE tasks;--" });
+
+      // The SQL should contain only whitelisted column names, never user values
+      const updateCall = prepareSpy.mock.calls.find(
+        (call) => typeof call[0] === "string" && call[0].includes("UPDATE tasks SET"),
+      );
+      expect(updateCall).toBeDefined();
+      const sql = updateCall![0] as string;
+      // Column names must be from a known whitelist — no user input in the SQL string
+      expect(sql).not.toContain("Robert");
+      expect(sql).not.toContain("DROP");
+      // All values should be bound via ? placeholders
+      expect(sql).toMatch(/SET\s+(\w+\s*=\s*\?,?\s*)+WHERE/);
+    });
+  });
+
+  describe("findAll — bounded results", () => {
+    it("returns at most 1000 results by default", () => {
+      const prepareSpy = vi.spyOn(db, "prepare");
+      repo.findAll();
+
+      const selectCall = prepareSpy.mock.calls.find(
+        (call) =>
+          typeof call[0] === "string" && (call[0] as string).includes("SELECT * FROM tasks"),
+      );
+      expect(selectCall).toBeDefined();
+      expect((selectCall![0] as string).toUpperCase()).toContain("LIMIT");
     });
   });
 

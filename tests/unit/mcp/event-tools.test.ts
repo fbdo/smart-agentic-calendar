@@ -70,6 +70,27 @@ describe("EventTools", () => {
   });
 
   describe("updateEvent", () => {
+    it("rejects end_time before start_time", () => {
+      const { tools } = createMocks();
+      expect(() =>
+        tools.updateEvent({
+          event_id: "evt-1",
+          start_time: "2026-04-10T10:00:00.000Z",
+          end_time: "2026-04-10T09:00:00.000Z",
+        }),
+      ).toThrow();
+    });
+
+    it("rejects is_all_day=true without date", () => {
+      const { tools } = createMocks();
+      expect(() =>
+        tools.updateEvent({
+          event_id: "evt-1",
+          is_all_day: true,
+        }),
+      ).toThrow();
+    });
+
     it("updates fields, triggers requestReplan", () => {
       const { tools, eventRepo, replanCoordinator } = createMocks();
       const result = tools.updateEvent({

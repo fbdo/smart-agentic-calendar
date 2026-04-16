@@ -1,6 +1,6 @@
 {
   "name": "@fbdo/smart-agentic-calendar",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Local-first smart calendar MCP server for AI agents with automatic task replanning",
   "type": "module",
   "main": "dist/index.js",

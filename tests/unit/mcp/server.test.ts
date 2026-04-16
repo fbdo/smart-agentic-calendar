@@ -11,6 +11,7 @@ import type { ConfigTools } from "../../../src/mcp/tools/config-tools.js";
 function createToolMocks() {
   const taskTools = {
     createTask: vi.fn().mockReturnValue({ task: { id: "t-1" } }),
+    getTask: vi.fn().mockReturnValue({ task: { id: "t-1" } }),
     updateTask: vi.fn().mockReturnValue({ task: { id: "t-1" } }),
     completeTask: vi.fn().mockReturnValue({ task: { id: "t-1" } }),
     deleteTask: vi.fn().mockReturnValue({ task_id: "t-1" }),
@@ -62,8 +63,9 @@ describe("McpServer", () => {
     );
 
     const toolNames = server.getToolNames();
-    expect(toolNames).toHaveLength(20);
+    expect(toolNames).toHaveLength(21);
     expect(toolNames).toContain("create_task");
+    expect(toolNames).toContain("get_task");
     expect(toolNames).toContain("update_task");
     expect(toolNames).toContain("complete_task");
     expect(toolNames).toContain("delete_task");

@@ -29,7 +29,14 @@ import {
 export { createNoOpLogger } from "./common/logger.js";
 
 export function getDbPath(): string {
-  return process.env.CALENDAR_DB_PATH ?? "./calendar.db";
+  const dbPath = process.env.CALENDAR_DB_PATH ?? "./calendar.db";
+  if (!dbPath) {
+    throw new Error("CALENDAR_DB_PATH must not be empty");
+  }
+  if (dbPath.includes("..")) {
+    throw new Error("CALENDAR_DB_PATH must not contain path traversal sequences (..)");
+  }
+  return dbPath;
 }
 
 export function createApp(dbPath: string, logger?: Logger) {

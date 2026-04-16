@@ -23,11 +23,10 @@ export class ScheduleRepository {
   }
 
   saveSchedule(timeBlocks: TimeBlock[]): void {
+    const insert = this.db.prepare(
+      "INSERT INTO time_blocks (id, task_id, start_time, end_time, date, block_index, total_blocks) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    );
     this.db.transaction(() => {
-      this.db.prepare("DELETE FROM time_blocks").run();
-      const insert = this.db.prepare(
-        "INSERT INTO time_blocks (id, task_id, start_time, end_time, date, block_index, total_blocks) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      );
       for (const block of timeBlocks) {
         insert.run(
           block.id,

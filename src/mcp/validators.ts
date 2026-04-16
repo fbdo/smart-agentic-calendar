@@ -23,6 +23,7 @@ import {
 import { isValidISO8601, isValidTimeHHMM } from "../common/time.js";
 
 const INVALID_PRIORITY_MESSAGE = "invalid priority: must be P1, P2, P3, or P4";
+const END_BEFORE_START_MESSAGE = "end time must be after start time";
 
 // ── MCP Input Types (snake_case) ─────────────────────────────────────
 
@@ -193,8 +194,24 @@ export function validateCreateEventInput(input: CreateEventMcpInput): void {
       throw new ValidationError("end_time is required for timed events");
     }
     if (input.end_time <= input.start_time) {
-      throw new ValidationError("end time must be after start time");
+      throw new ValidationError(END_BEFORE_START_MESSAGE);
     }
+  }
+}
+
+export function validateUpdateEventInput(input: UpdateEventMcpInput): void {
+  if (!input.event_id) {
+    throw new ValidationError("event_id is required");
+  }
+  if (
+    input.start_time !== undefined &&
+    input.end_time !== undefined &&
+    input.end_time <= input.start_time
+  ) {
+    throw new ValidationError(END_BEFORE_START_MESSAGE);
+  }
+  if (input.is_all_day === true && input.date === undefined) {
+    throw new ValidationError("date is required for all-day events");
   }
 }
 
@@ -300,7 +317,7 @@ function validateDayAndTime(day: number, startTime: string, endTime: string): vo
     throw new ValidationError("invalid time format");
   }
   if (endTime <= startTime) {
-    throw new ValidationError("end time must be after start time");
+    throw new ValidationError(END_BEFORE_START_MESSAGE);
   }
 }
 
