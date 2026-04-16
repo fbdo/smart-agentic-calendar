@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import path from "node:path";
 import { Database } from "./storage/database.js";
 import { TaskRepository } from "./storage/task-repository.js";
 import { EventRepository } from "./storage/event-repository.js";
@@ -22,6 +23,7 @@ import {
   AppLogger,
   createStderrTransport,
   createNoOpLogger,
+  LOG_LEVEL_SEVERITY,
   type Logger,
   type LoggingLevel,
 } from "./common/logger.js";
@@ -35,6 +37,10 @@ export function getDbPath(): string {
   }
   if (dbPath.includes("..")) {
     throw new Error("CALENDAR_DB_PATH must not contain path traversal sequences (..)");
+  }
+  const resolved = path.resolve(dbPath);
+  if (!resolved.startsWith(process.cwd())) {
+    throw new Error("CALENDAR_DB_PATH must be within the working directory");
   }
   return dbPath;
 }
@@ -129,10 +135,23 @@ export function createApp(dbPath: string, logger?: Logger) {
 // Entry point — start the server when run directly (not imported by tests)
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   const dbPath = getDbPath();
-  const logLevel = (process.env.LOG_LEVEL as LoggingLevel) ?? "warning";
+  const rawLevel = process.env.LOG_LEVEL ?? "warning";
+  const validLevels = Object.keys(LOG_LEVEL_SEVERITY);
+  if (!validLevels.includes(rawLevel)) {
+    throw new Error(`Invalid LOG_LEVEL "${rawLevel}". Valid values: ${validLevels.join(", ")}`);
+  }
+  const logLevel = rawLevel as LoggingLevel;
   const appLogger = new AppLogger([createStderrTransport(logLevel)]);
 
-  const { server } = createApp(dbPath, appLogger);
+  const { server, database } = createApp(dbPath, appLogger);
+
+  const shutdown = () => {
+    database.close();
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+
   server.start(appLogger).catch((error) => {
     appLogger.emergency("mcp", `Fatal: ${error}`);
     process.exit(1);

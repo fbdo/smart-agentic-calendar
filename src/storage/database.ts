@@ -169,6 +169,7 @@ export class Database extends BetterSqlite3 {
     this.logger = logger;
     this.pragma("journal_mode = WAL");
     this.pragma("foreign_keys = ON");
+    this.pragma("busy_timeout = 5000");
     this.logger.debug("database", `opened ${filename}`);
     runMigrations(this);
   }

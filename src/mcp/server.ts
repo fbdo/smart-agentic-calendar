@@ -49,7 +49,12 @@ export function wrapToolHandler(
           isError: true,
         };
       }
-      logger.error("tools", { event: "tool_unexpected_error", tool: toolName });
+      logger.error("tools", {
+        event: "tool_unexpected_error",
+        tool: toolName,
+        error: String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return {
         content: [
           {

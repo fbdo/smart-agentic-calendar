@@ -96,40 +96,24 @@ export class ReplanCoordinator {
       horizonStart.setUTCHours(0, 0, 0, 0);
       const result = this.scheduler.generateSchedule(horizonStart, horizonEnd);
 
-      // Step 3: Save results
-      this.scheduleRepo.clearSchedule();
-      this.scheduleRepo.saveSchedule(result.timeBlocks);
+      // Step 3: Save results (atomic clear+insert)
+      this.scheduleRepo.replaceSchedule(result.timeBlocks);
 
       this.logger.info("replan", {
         event: "replan_complete",
         blocksCount: result.timeBlocks.length,
       });
 
-      // Step 4: Update task statuses — mark scheduled tasks
-      const scheduledTaskIds = new Set(result.timeBlocks.map((b) => b.taskId));
-      const atRiskIds = new Set(result.atRiskTasks.map((a) => a.taskId));
-
-      for (const taskId of scheduledTaskIds) {
-        if (atRiskIds.has(taskId)) continue; // at_risk takes precedence
-        const task = this.taskRepo.findById(taskId);
-        if (task && (task.status === "pending" || task.status === "at_risk")) {
-          this.taskRepo.updateStatus(taskId, "scheduled");
-        }
-      }
-
-      for (const atRisk of result.atRiskTasks) {
-        const task = this.taskRepo.findById(atRisk.taskId);
-        if (task && task.status !== "completed" && task.status !== "cancelled") {
-          this.taskRepo.updateStatus(atRisk.taskId, "at_risk");
-        }
-      }
+      // Step 4: Update task statuses
+      this.updateTaskStatuses(result);
 
       succeeded = true;
     } catch (error) {
       // Graceful degradation: previous schedule preserved, status stays stale
-      this.logger.notice("replan", {
+      this.logger.error("replan", {
         event: "replan_failed_graceful_degradation",
         error: String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       this.replanning = false;
@@ -148,6 +132,26 @@ export class ReplanCoordinator {
       if (this.dirty) {
         this.logger.debug("replan", "dirty during replan, scheduling another");
         this.pendingTimeout = setTimeout(() => this.executeReplan(), 0);
+      }
+    }
+  }
+
+  private updateTaskStatuses(result: ReturnType<Scheduler["generateSchedule"]>): void {
+    const scheduledTaskIds = new Set(result.timeBlocks.map((b) => b.taskId));
+    const atRiskIds = new Set(result.atRiskTasks.map((a) => a.taskId));
+
+    for (const taskId of scheduledTaskIds) {
+      if (atRiskIds.has(taskId)) continue;
+      const task = this.taskRepo.findById(taskId);
+      if (task && (task.status === "pending" || task.status === "at_risk")) {
+        this.taskRepo.updateStatus(taskId, "scheduled");
+      }
+    }
+
+    for (const atRisk of result.atRiskTasks) {
+      const task = this.taskRepo.findById(atRisk.taskId);
+      if (task && task.status !== "completed" && task.status !== "cancelled") {
+        this.taskRepo.updateStatus(atRisk.taskId, "at_risk");
       }
     }
   }

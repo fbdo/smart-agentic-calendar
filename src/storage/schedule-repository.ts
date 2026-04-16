@@ -78,6 +78,27 @@ export class ScheduleRepository {
     this.db.prepare("DELETE FROM time_blocks").run();
   }
 
+  replaceSchedule(timeBlocks: TimeBlock[]): void {
+    const del = this.db.prepare("DELETE FROM time_blocks");
+    const insert = this.db.prepare(
+      "INSERT INTO time_blocks (id, task_id, start_time, end_time, date, block_index, total_blocks) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    );
+    this.db.transaction(() => {
+      del.run();
+      for (const block of timeBlocks) {
+        insert.run(
+          block.id,
+          block.taskId,
+          block.startTime,
+          block.endTime,
+          block.date,
+          block.blockIndex,
+          block.totalBlocks,
+        );
+      }
+    })();
+  }
+
   private rowToTimeBlock(row: TimeBlockRow): TimeBlock {
     return {
       id: row.id,

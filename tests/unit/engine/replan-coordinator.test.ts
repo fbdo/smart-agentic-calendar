@@ -23,6 +23,7 @@ function createMocks() {
     setScheduleStatus: vi.fn(),
     clearSchedule: vi.fn(),
     saveSchedule: vi.fn(),
+    replaceSchedule: vi.fn(),
     getScheduleStatus: vi.fn().mockReturnValue("up_to_date"),
   } as unknown as ScheduleRepository;
 
@@ -170,8 +171,7 @@ describe("ReplanCoordinator", () => {
     coordinator.requestReplan();
     await vi.advanceTimersToNextTimerAsync();
 
-    expect(scheduleRepo.clearSchedule).toHaveBeenCalled();
-    expect(scheduleRepo.saveSchedule).toHaveBeenCalled();
+    expect(scheduleRepo.replaceSchedule).toHaveBeenCalled();
   });
 
   it("replan calls recurrenceManager.expandHorizon before scheduling", async () => {

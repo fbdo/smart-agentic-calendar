@@ -28,7 +28,7 @@ describe("Composition root", () => {
 
   it("environment variable CALENDAR_DB_PATH overrides default", () => {
     const original = process.env.CALENDAR_DB_PATH;
-    const testDbPath = process.env.HOME + "/.calendar-test/override.db"; // avoid publicly-writable /tmp
+    const testDbPath = "./test-data/override.db";
     process.env.CALENDAR_DB_PATH = testDbPath;
     try {
       expect(getDbPath()).toBe(testDbPath);
