@@ -406,7 +406,13 @@ describe("Scheduler - Scoring Functions", () => {
       const slot = makeSlot("2026-04-13", "14:00", "15:00");
       const now = new Date("2026-04-10T09:00:00.000Z");
       const noFocus: FocusTime = { blocks: [], minimumBlockMinutes: 60 };
-      const result = scoreSlot(task, slot, now, noFocus, null, [], 15);
+      const result = scoreSlot(task, slot, {
+        now,
+        focusTime: noFocus,
+        energyConfig: null,
+        adjacentBlocks: [],
+        bufferTimeMinutes: 15,
+      });
 
       // With no deadline: deadlineProximity=0.5, P1 priority=1.0, no focus=0.5, no energy=0.5, no adjacent=1.0
       const expected =
@@ -424,7 +430,13 @@ describe("Scheduler - Scoring Functions", () => {
       const slot = makeSlot("2026-04-13", "14:00", "15:00");
       const now = new Date("2026-04-10T09:00:00.000Z");
       const noFocus: FocusTime = { blocks: [], minimumBlockMinutes: 60 };
-      const result = scoreSlot(task, slot, now, noFocus, null, [], 15);
+      const result = scoreSlot(task, slot, {
+        now,
+        focusTime: noFocus,
+        energyConfig: null,
+        adjacentBlocks: [],
+        bufferTimeMinutes: 15,
+      });
 
       expect(result.breakdown.priority).toBe(0.75);
       expect(result.breakdown.deadlineProximity).toBe(0.5);

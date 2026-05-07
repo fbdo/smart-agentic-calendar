@@ -36,11 +36,19 @@ interface SlotScore {
   };
 }
 
-interface EnergyConfig {
+export interface EnergyConfig {
   peakEnergyStart: string;
   peakEnergyEnd: string;
   lowEnergyStart: string;
   lowEnergyEnd: string;
+}
+
+export interface ScoringContext {
+  now: Date;
+  focusTime: FocusTime;
+  energyConfig: EnergyConfig | null;
+  adjacentBlocks: TimeBlock[];
+  bufferTimeMinutes: number;
 }
 
 export const DEFAULT_WEIGHTS = {
@@ -154,21 +162,13 @@ export function bufferScore(
   return Math.max(0, score);
 }
 
-export function scoreSlot(
-  task: Task,
-  slot: AvailableSlot,
-  now: Date,
-  focusTime: FocusTime,
-  energyConfig: EnergyConfig | null,
-  adjacentBlocks: TimeBlock[],
-  bufferTimeMinutes: number,
-): SlotScore {
+export function scoreSlot(task: Task, slot: AvailableSlot, ctx: ScoringContext): SlotScore {
   const breakdown = {
-    deadlineProximity: deadlineProximityScore(task, slot, now),
+    deadlineProximity: deadlineProximityScore(task, slot, ctx.now),
     priority: priorityScore(task),
-    focusTime: focusTimeScore(task, slot, focusTime),
-    energy: energyScore(task, slot, energyConfig),
-    buffer: bufferScore(slot, adjacentBlocks, bufferTimeMinutes),
+    focusTime: focusTimeScore(task, slot, ctx.focusTime),
+    energy: energyScore(task, slot, ctx.energyConfig),
+    buffer: bufferScore(slot, ctx.adjacentBlocks, ctx.bufferTimeMinutes),
   };
 
   const totalScore =
@@ -414,12 +414,18 @@ export function placeTask(
   const blocks: TimeBlock[] = [];
   let blockIndex = 0;
 
+  const scoringCtx: ScoringContext = {
+    now,
+    focusTime,
+    energyConfig,
+    adjacentBlocks: existingBlocks,
+    bufferTimeMinutes,
+  };
+
   // Score all available slots
   const scoredSlots = availableSlots
     .filter((s) => s.durationMinutes >= minimumBlockMinutes)
-    .map((slot) =>
-      scoreSlot(task, slot, now, focusTime, energyConfig, existingBlocks, bufferTimeMinutes),
-    )
+    .map((slot) => scoreSlot(task, slot, scoringCtx))
     .sort((a, b) => b.totalScore - a.totalScore);
 
   // Apply focus time fragmentation prevention

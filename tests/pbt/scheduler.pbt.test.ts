@@ -173,7 +173,13 @@ describe("Scheduler PBT", () => {
         );
         const slot = makeSlot("2026-04-13", "10:00", "11:00");
 
-        const result = scoreSlot(task, slot, now, noFocus, null, [], 15);
+        const result = scoreSlot(task, slot, {
+          now,
+          focusTime: noFocus,
+          energyConfig: null,
+          adjacentBlocks: [],
+          bufferTimeMinutes: 15,
+        });
 
         expect(result.totalScore).toBeGreaterThanOrEqual(0);
         expect(result.totalScore).toBeLessThanOrEqual(maxScore);
