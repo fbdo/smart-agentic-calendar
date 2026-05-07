@@ -976,4 +976,87 @@ describe("TaskRepository", () => {
       expect(() => repo.recordActualDuration("nonexistent", 30)).toThrow(NotFoundError);
     });
   });
+
+  describe("update — atomic UPDATE … RETURNING *", () => {
+    it("issues a single UPDATE … RETURNING * statement on the happy path (no separate findById)", () => {
+      const task = repo.create({
+        title: "Original",
+        description: null,
+        duration: 30,
+        deadline: null,
+        priority: "P3",
+        category: null,
+        tags: [],
+        isRecurring: false,
+        recurrenceTemplateId: null,
+      });
+
+      const prepareSpy = vi.spyOn(db, "prepare");
+      repo.update(task.id, { title: "Updated" });
+
+      const sqlStatements = prepareSpy.mock.calls
+        .map((call) => call[0])
+        .filter((sql): sql is string => typeof sql === "string");
+
+      // Exactly one UPDATE on the tasks table, and it must use RETURNING.
+      const updateStatements = sqlStatements.filter((sql) => /UPDATE\s+tasks\s+SET/i.test(sql));
+      expect(updateStatements).toHaveLength(1);
+      expect(updateStatements[0]).toMatch(/RETURNING\s+\*/i);
+
+      // No follow-up SELECT * FROM tasks WHERE id = ? on the happy path.
+      const selectStatements = sqlStatements.filter((sql) =>
+        /SELECT\s+\*\s+FROM\s+tasks\s+WHERE\s+id\s*=\s*\?/i.test(sql),
+      );
+      expect(selectStatements).toHaveLength(0);
+    });
+
+    it("includes a status guard in the WHERE clause to close the TOCTOU window", () => {
+      const task = repo.create({
+        title: "Original",
+        description: null,
+        duration: 30,
+        deadline: null,
+        priority: "P3",
+        category: null,
+        tags: [],
+        isRecurring: false,
+        recurrenceTemplateId: null,
+      });
+
+      const prepareSpy = vi.spyOn(db, "prepare");
+      repo.update(task.id, { title: "Updated" });
+
+      const updateSql = prepareSpy.mock.calls
+        .map((call) => call[0])
+        .filter((sql): sql is string => typeof sql === "string")
+        .find((sql) => /UPDATE\s+tasks\s+SET/i.test(sql));
+
+      expect(updateSql).toBeDefined();
+      // Status precondition must be enforced atomically in the WHERE clause.
+      expect(updateSql!).toMatch(
+        /WHERE[\s\S]*status\s+NOT\s+IN\s*\(\s*'completed'\s*,\s*'cancelled'\s*\)/i,
+      );
+    });
+
+    it("returns the updated row directly from RETURNING (no second read)", () => {
+      const task = repo.create({
+        title: "Original",
+        description: null,
+        duration: 30,
+        deadline: null,
+        priority: "P3",
+        category: null,
+        tags: [],
+        isRecurring: false,
+        recurrenceTemplateId: null,
+      });
+
+      const updated = repo.update(task.id, { title: "Updated", priority: "P1" });
+
+      expect(updated.id).toBe(task.id);
+      expect(updated.title).toBe("Updated");
+      expect(updated.priority).toBe("P1");
+      expect(updated.updatedAt >= task.updatedAt).toBe(true);
+    });
+  });
 });

@@ -147,14 +147,6 @@ export class TaskRepository {
   }
 
   update(id: string, updates: TaskUpdates): Task {
-    const current = this.findById(id);
-    if (!current) {
-      throw new NotFoundError("Task", id);
-    }
-    if (current.status === "completed" || current.status === "cancelled") {
-      throw new InvalidStateError(`cannot modify ${current.status} task`);
-    }
-
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
@@ -172,14 +164,29 @@ export class TaskRepository {
       }
     }
 
-    const now = nowUTC();
     setClauses.push("updated_at = ?");
-    params.push(now);
+    params.push(nowUTC());
     params.push(id);
 
-    this.db.prepare(`UPDATE tasks SET ${setClauses.join(", ")} WHERE id = ?`).run(...params);
+    const row = this.db
+      .prepare(
+        `UPDATE tasks SET ${setClauses.join(", ")}
+         WHERE id = ? AND status NOT IN ('completed', 'cancelled')
+         RETURNING *`,
+      )
+      .get(...params) as TaskRow | undefined;
 
-    return this.findById(id) as Task;
+    if (row) {
+      return rowToTask(row);
+    }
+
+    const existing = this.db.prepare("SELECT status FROM tasks WHERE id = ?").get(id) as
+      | { status: string }
+      | undefined;
+    if (!existing) {
+      throw new NotFoundError("Task", id);
+    }
+    throw new InvalidStateError(`cannot modify ${existing.status} task`);
   }
 
   updateStatus(id: string, status: TaskStatus): Task {
