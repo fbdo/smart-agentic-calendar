@@ -11,6 +11,7 @@ import type { ScheduleRepository } from "../storage/schedule-repository.js";
 import type { Logger } from "../common/logger.js";
 import { generateId } from "../common/id.js";
 import { diffMinutes, addMinutes } from "../common/time.js";
+import { ACTIVE_TASK_STATUSES } from "../common/constants.js";
 import { ConflictDetector } from "./conflict-detector.js";
 import { DependencyResolver } from "./dependency-resolver.js";
 
@@ -71,14 +72,15 @@ export function deadlineProximityScore(task: Task, _slot: AvailableSlot, now: Da
   return Math.max(0, Math.min(1, urgency));
 }
 
+const PRIORITY_SCORES: Record<string, number> = {
+  P1: 1.0,
+  P2: 0.75,
+  P3: 0.5,
+  P4: 0.25,
+};
+
 export function priorityScore(task: Task): number {
-  const scores: Record<string, number> = {
-    P1: 1.0,
-    P2: 0.75,
-    P3: 0.5,
-    P4: 0.25,
-  };
-  return scores[task.priority] ?? 0.5;
+  return PRIORITY_SCORES[task.priority] ?? 0.5;
 }
 
 export function focusTimeScore(task: Task, slot: AvailableSlot, focusTime: FocusTime): number {
@@ -280,9 +282,7 @@ export class Scheduler {
 
     // 1. Load inputs
     const allTasks = this.taskRepo.findAll();
-    const pendingTasks = allTasks.filter(
-      (t) => t.status === "pending" || t.status === "scheduled" || t.status === "at_risk",
-    );
+    const pendingTasks = allTasks.filter((t) => ACTIVE_TASK_STATUSES.includes(t.status));
     const events = this.eventRepo.findInRange(start.toISOString(), end.toISOString());
 
     // Get pinned blocks (completed/in-progress tasks)
@@ -292,14 +292,10 @@ export class Scheduler {
     );
     const pinnedBlocks = existingBlocks.filter((b) => completedTaskIds.has(b.taskId));
 
-    // Load dependencies
-    const dependencies: DependencyEdge[] = [];
-    for (const task of pendingTasks) {
-      const deps = this.taskRepo.getDependencies(task.id);
-      for (const dep of deps) {
-        dependencies.push({ taskId: task.id, dependsOnId: dep.id });
-      }
-    }
+    const pendingTaskIds = new Set(pendingTasks.map((t) => t.id));
+    const dependencies: DependencyEdge[] = this.taskRepo
+      .getAllDependencyEdges()
+      .filter((d) => pendingTaskIds.has(d.taskId));
 
     // 2. Build availability map
     const availableSlots = buildAvailabilityMap(
@@ -455,14 +451,13 @@ export function placeTask(
       endTime: addMinutes(slot.startTime, blockDuration),
       date: slot.date,
       blockIndex,
-      totalBlocks: 0, // Updated below
+      totalBlocks: 0,
     });
 
     remainingMinutes -= blockDuration;
     blockIndex++;
   }
 
-  // Update totalBlocks
   for (const block of blocks) {
     block.totalBlocks = blocks.length;
   }

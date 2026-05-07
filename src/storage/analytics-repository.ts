@@ -2,6 +2,7 @@ import type { Task } from "../models/task.js";
 import type { CompletedTaskRecord, DurationRecord, CategorySummary } from "../models/analytics.js";
 import type { Database } from "./database.js";
 import type { Logger } from "../common/logger.js";
+import { rowToTask, type TaskRow } from "./mappers.js";
 
 interface CompletedTaskRow {
   task_id: string;
@@ -24,23 +25,6 @@ interface CategoryRow {
   category: string;
   total_minutes: number;
   task_count: number;
-}
-
-interface TaskRow {
-  id: string;
-  title: string;
-  description: string | null;
-  duration: number;
-  deadline: string | null;
-  priority: string;
-  status: string;
-  category: string | null;
-  tags: string;
-  is_recurring: number;
-  recurrence_template_id: string | null;
-  actual_duration: number | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export class AnalyticsRepository {
@@ -75,7 +59,7 @@ export class AnalyticsRepository {
       )
       .all(referenceTime) as TaskRow[];
 
-    return rows.map((row) => this.rowToTask(row));
+    return rows.map(rowToTask);
   }
 
   getCancelledTasks(start: string, end: string): Task[] {
@@ -87,7 +71,7 @@ export class AnalyticsRepository {
       )
       .all(start, end) as TaskRow[];
 
-    return rows.map((row) => this.rowToTask(row));
+    return rows.map(rowToTask);
   }
 
   getTasksByCategory(start: string, end: string): CategorySummary[] {
@@ -146,25 +130,6 @@ export class AnalyticsRepository {
       category: row.category,
       totalMinutes: row.total_minutes,
       taskCount: row.task_count,
-    };
-  }
-
-  private rowToTask(row: TaskRow): Task {
-    return {
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      duration: row.duration,
-      deadline: row.deadline,
-      priority: row.priority as Task["priority"],
-      status: row.status as Task["status"],
-      category: row.category,
-      tags: JSON.parse(row.tags) as string[],
-      isRecurring: !!row.is_recurring,
-      recurrenceTemplateId: row.recurrence_template_id,
-      actualDuration: row.actual_duration,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
     };
   }
 }

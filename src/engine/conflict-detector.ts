@@ -5,13 +5,7 @@ import type { Conflict, DeprioritizationSuggestion } from "../models/conflict.js
 import type { DependencyEdge } from "../models/dependency.js";
 import type { Logger } from "../common/logger.js";
 import { diffMinutes } from "../common/time.js";
-
-const PRIORITY_RANK: Record<string, number> = {
-  P1: 1,
-  P2: 2,
-  P3: 3,
-  P4: 4,
-};
+import { PRIORITY_RANK, TERMINAL_TASK_STATUSES } from "../common/constants.js";
 
 interface CompetingTask {
   taskId: string;
@@ -35,8 +29,11 @@ export class ConflictDetector {
   ): Conflict[] {
     const conflicts: Conflict[] = [];
 
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const depsByTaskId = groupDependenciesByTaskId(dependencies);
+
     for (const task of tasks) {
-      if (task.status === "completed" || task.status === "cancelled") {
+      if (TERMINAL_TASK_STATUSES.includes(task.status)) {
         continue;
       }
 
@@ -61,14 +58,14 @@ export class ConflictDetector {
       }
 
       // Check 2: Dependency chain infeasibility
-      const chainDuration = this.computeDependencyChainDuration(task, tasks, dependencies);
+      const chainDuration = this.computeDependencyChainDuration(task, taskMap, depsByTaskId);
       if (chainDuration > 0) {
         const hoursAvailable = this.computeAvailableMinutesBeforeDeadline(
           now,
           new Date(task.deadline),
         );
         if (chainDuration > hoursAvailable) {
-          const chainIds = this.getDependencyChainIds(task, tasks, dependencies);
+          const chainIds = this.getDependencyChainIds(task, taskMap, depsByTaskId);
           conflicts.push({
             taskId: task.id,
             reason: "dependency_chain",
@@ -85,7 +82,7 @@ export class ConflictDetector {
       // Check 3: Insufficient time
       const scheduledMinutes = this.getScheduledMinutes(task.id, timeBlocks);
       if (scheduledMinutes < task.duration) {
-        const competing = this.findCompetingTasks(task, timeBlocks, tasks);
+        const competing = this.findCompetingTasks(task, timeBlocks, taskMap);
         const requiredMinutes = task.duration - scheduledMinutes;
         const suggestions = this.suggestDeprioritizations(task, competing, requiredMinutes);
 
@@ -146,14 +143,14 @@ export class ConflictDetector {
     return suggestions;
   }
 
-  findCompetingTasks(atRiskTask: Task, timeBlocks: TimeBlock[], allTasks: Task[]): CompetingTask[] {
+  findCompetingTasks(
+    atRiskTask: Task,
+    timeBlocks: TimeBlock[],
+    taskMap: Map<string, Task>,
+  ): CompetingTask[] {
     if (!atRiskTask.deadline) return [];
 
     const deadline = new Date(atRiskTask.deadline);
-    const taskMap = new Map<string, Task>();
-    for (const task of allTasks) {
-      taskMap.set(task.id, task);
-    }
 
     // Find blocks that occupy time before the at-risk task's deadline
     const competingBlocks = timeBlocks.filter(
@@ -198,69 +195,62 @@ export class ConflictDetector {
 
   private computeDependencyChainDuration(
     task: Task,
-    allTasks: Task[],
-    dependencies: DependencyEdge[],
+    taskMap: Map<string, Task>,
+    depsByTaskId: Map<string, DependencyEdge[]>,
   ): number {
-    const taskMap = new Map<string, Task>();
-    for (const t of allTasks) {
-      taskMap.set(t.id, t);
-    }
-
-    // Walk backwards through dependencies, summing durations
-    const visited = new Set<string>();
     let totalDuration = 0;
-
-    const walk = (taskId: string): void => {
-      if (visited.has(taskId)) return;
-      visited.add(taskId);
-
-      const deps = dependencies.filter((d) => d.taskId === taskId);
-      for (const dep of deps) {
-        const depTask = taskMap.get(dep.dependsOnId);
-        if (depTask && depTask.status !== "completed") {
-          totalDuration += depTask.duration;
-          walk(dep.dependsOnId);
-        }
-      }
-    };
-
-    walk(task.id);
-    // Include the task itself
+    walkDependencyChain(task.id, taskMap, depsByTaskId, (depTask) => {
+      totalDuration += depTask.duration;
+    });
     if (totalDuration > 0) {
       totalDuration += task.duration;
     }
-
     return totalDuration;
   }
 
   private getDependencyChainIds(
     task: Task,
-    allTasks: Task[],
-    dependencies: DependencyEdge[],
+    taskMap: Map<string, Task>,
+    depsByTaskId: Map<string, DependencyEdge[]>,
   ): string[] {
-    const taskMap = new Map<string, Task>();
-    for (const t of allTasks) {
-      taskMap.set(t.id, t);
-    }
-
-    const visited = new Set<string>();
     const chainIds: string[] = [];
-
-    const walk = (taskId: string): void => {
-      if (visited.has(taskId)) return;
-      visited.add(taskId);
-
-      const deps = dependencies.filter((d) => d.taskId === taskId);
-      for (const dep of deps) {
-        const depTask = taskMap.get(dep.dependsOnId);
-        if (depTask && depTask.status !== "completed") {
-          chainIds.push(dep.dependsOnId);
-          walk(dep.dependsOnId);
-        }
-      }
-    };
-
-    walk(task.id);
+    walkDependencyChain(task.id, taskMap, depsByTaskId, (depTask) => {
+      chainIds.push(depTask.id);
+    });
     return chainIds;
+  }
+}
+
+function groupDependenciesByTaskId(dependencies: DependencyEdge[]): Map<string, DependencyEdge[]> {
+  const map = new Map<string, DependencyEdge[]>();
+  for (const edge of dependencies) {
+    const list = map.get(edge.taskId);
+    if (list) list.push(edge);
+    else map.set(edge.taskId, [edge]);
+  }
+  return map;
+}
+
+function walkDependencyChain(
+  startTaskId: string,
+  taskMap: Map<string, Task>,
+  depsByTaskId: Map<string, DependencyEdge[]>,
+  visit: (depTask: Task) => void,
+): void {
+  const visited = new Set<string>();
+  const stack: string[] = [startTaskId];
+  while (stack.length > 0) {
+    const taskId = stack.pop() as string;
+    if (visited.has(taskId)) continue;
+    visited.add(taskId);
+    const deps = depsByTaskId.get(taskId);
+    if (!deps) continue;
+    for (const dep of deps) {
+      const depTask = taskMap.get(dep.dependsOnId);
+      if (depTask && depTask.status !== "completed") {
+        visit(depTask);
+        stack.push(dep.dependsOnId);
+      }
+    }
   }
 }

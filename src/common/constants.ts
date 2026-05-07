@@ -15,6 +15,24 @@ export const VALID_STATUSES = [
 ] as const;
 export const VALID_PERIODS = ["day", "week", "month"] as const;
 
+export const PRIORITY_RANK: Record<string, number> = {
+  P1: 1,
+  P2: 2,
+  P3: 3,
+  P4: 4,
+};
+
+export const TERMINAL_TASK_STATUSES: readonly (typeof VALID_STATUSES)[number][] = [
+  "completed",
+  "cancelled",
+];
+
+export const ACTIVE_TASK_STATUSES: readonly (typeof VALID_STATUSES)[number][] = [
+  "pending",
+  "scheduled",
+  "at_risk",
+];
+
 export const MAX_SCHEDULING_HORIZON_WEEKS = 12;
 export const MIN_MINIMUM_BLOCK_MINUTES = 15;
 export const MAX_MINIMUM_BLOCK_MINUTES = 120;

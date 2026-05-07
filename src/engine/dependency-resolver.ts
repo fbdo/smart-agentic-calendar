@@ -2,13 +2,7 @@ import type { Task } from "../models/task.js";
 import type { DependencyEdge } from "../models/dependency.js";
 import type { Logger } from "../common/logger.js";
 import { CircularDependencyError, ValidationError } from "../models/errors.js";
-
-const PRIORITY_RANK: Record<string, number> = {
-  P1: 1,
-  P2: 2,
-  P3: 3,
-  P4: 4,
-};
+import { PRIORITY_RANK } from "../common/constants.js";
 
 function buildAdjacencyMap(edges: DependencyEdge[]): Map<string, string[]> {
   const adj = new Map<string, string[]>();
@@ -87,25 +81,9 @@ export class DependencyResolver {
       throw new ValidationError("a task cannot depend on itself");
     }
 
-    // Check: can we reach taskId starting from dependsOnId via existing edges?
-    // Edges go: dependsOnId → taskId (dependsOn direction)
-    // We need to traverse: from dependsOnId, follow "who depends on this node" edges
-    // If we can reach taskId, then adding taskId→dependsOnId creates a cycle.
-    //
-    // Actually, rethink: edges represent "taskId depends on dependsOnId".
-    // To check if adding (taskId depends on dependsOnId) creates a cycle,
-    // we need to check: can we reach dependsOnId from taskId via existing dependency chains?
-    // i.e., does taskId have a path TO dependsOnId through existing edges?
-    // An edge { taskId: X, dependsOnId: Y } means X depends on Y, so X comes after Y.
-    // Following "depends on" from taskId: taskId → its dependencies → their dependencies → ...
-    // If we find dependsOnId in that chain, adding dependsOnId as another dependency of taskId
-    // doesn't create a cycle (it's just adding a redundant path).
-    //
-    // The cycle occurs if dependsOnId can reach taskId via "depends on" edges.
-    // i.e., dependsOnId depends on ... depends on taskId. Then adding taskId depends on dependsOnId
-    // closes the loop.
-    //
-    // Build reverse lookup: for each node, what does it depend on?
+    // A cycle would form if dependsOnId already (transitively) depends on taskId,
+    // since adding taskId → dependsOnId would close the loop. DFS from dependsOnId
+    // following "depends on" edges; if we reach taskId, reject.
     const dependsOnMap = new Map<string, string[]>();
     for (const edge of existingDeps) {
       const deps = dependsOnMap.get(edge.taskId) ?? [];
@@ -193,15 +171,19 @@ export class DependencyResolver {
   }
 
   getBlockedTasks(tasks: Task[], dependencies: DependencyEdge[]): Task[] {
-    const taskMap = new Map<string, Task>();
-    for (const task of tasks) {
-      taskMap.set(task.id, task);
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+
+    const depsByTaskId = new Map<string, DependencyEdge[]>();
+    for (const edge of dependencies) {
+      const list = depsByTaskId.get(edge.taskId);
+      if (list) list.push(edge);
+      else depsByTaskId.set(edge.taskId, [edge]);
     }
 
     const blocked: Task[] = [];
-
     for (const task of tasks) {
-      const deps = dependencies.filter((d) => d.taskId === task.id);
+      const deps = depsByTaskId.get(task.id);
+      if (!deps) continue;
       for (const dep of deps) {
         const depTask = taskMap.get(dep.dependsOnId);
         if (depTask && depTask.status !== "completed") {
@@ -210,7 +192,6 @@ export class DependencyResolver {
         }
       }
     }
-
     return blocked;
   }
 }

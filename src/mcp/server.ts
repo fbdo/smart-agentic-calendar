@@ -73,6 +73,8 @@ export function wrapToolHandler(
 
 const TASK_ID_DESCRIPTION = "Task ID (required)";
 const PERIOD_SCHEMA = z.enum(["day", "week", "month"]).describe("Analysis period (required)");
+const PRIORITY_SCHEMA = z.enum(["P1", "P2", "P3", "P4"]);
+const STATUS_SCHEMA = z.enum(["pending", "scheduled", "completed", "cancelled", "at_risk"]);
 
 export class McpServer {
   private readonly sdkServer: SdkMcpServer;
@@ -147,10 +149,7 @@ export class McpServer {
           .string()
           .optional()
           .describe("ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T17:30:00Z (optional)"),
-        priority: z
-          .enum(["P1", "P2", "P3", "P4"])
-          .optional()
-          .describe("Priority level (optional, default P3)"),
+        priority: PRIORITY_SCHEMA.optional().describe("Priority level (optional, default P3)"),
         category: z.string().optional().describe("Task category (optional)"),
         tags: z.array(z.string()).optional().describe("Tags (optional, default [])"),
         recurrence_rule: z
@@ -180,7 +179,7 @@ export class McpServer {
           .string()
           .optional()
           .describe("ISO 8601 UTC datetime ending in Z, e.g. 2026-06-01T17:30:00Z"),
-        priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
+        priority: PRIORITY_SCHEMA.optional(),
         category: z.string().optional(),
         tags: z.array(z.string()).optional(),
         blocked_by: z.array(z.string()).optional(),
@@ -214,8 +213,8 @@ export class McpServer {
       "list_tasks",
       "List tasks with optional filters. By default excludes cancelled tasks. No replan triggered.",
       z.object({
-        status: z.enum(["pending", "scheduled", "completed", "cancelled", "at_risk"]).optional(),
-        priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
+        status: STATUS_SCHEMA.optional(),
+        priority: PRIORITY_SCHEMA.optional(),
         deadline_before: z
           .string()
           .optional()
@@ -394,7 +393,7 @@ export class McpServer {
       "Update scheduling preferences (partial merge). Triggers background replan. At least one field required.",
       z.object({
         buffer_time_minutes: z.number().optional().describe("Buffer between tasks (>= 0)"),
-        default_priority: z.enum(["P1", "P2", "P3", "P4"]).optional(),
+        default_priority: PRIORITY_SCHEMA.optional(),
         default_duration: z.number().optional().describe("Default task duration in minutes"),
         scheduling_horizon_weeks: z.number().optional().describe("Scheduling horizon (1-12)"),
         minimum_block_minutes: z.number().optional().describe("Min task block (15-120)"),

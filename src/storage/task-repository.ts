@@ -4,6 +4,7 @@ import { generateId } from "../common/id.js";
 import { nowUTC, isValidISO8601 } from "../common/time.js";
 import type { Database } from "./database.js";
 import type { Logger } from "../common/logger.js";
+import { rowToTask, type TaskRow } from "./mappers.js";
 
 export interface TaskFilters {
   status?: TaskStatus;
@@ -18,23 +19,6 @@ type TaskInput = Omit<Task, "id" | "createdAt" | "updatedAt" | "status" | "actua
 type TaskUpdates = Partial<
   Pick<Task, "title" | "description" | "duration" | "deadline" | "priority" | "category" | "tags">
 >;
-
-interface TaskRow {
-  id: string;
-  title: string;
-  description: string | null;
-  duration: number;
-  deadline: string | null;
-  priority: string;
-  status: string;
-  category: string | null;
-  tags: string;
-  is_recurring: number;
-  recurrence_template_id: string | null;
-  actual_duration: number | null;
-  created_at: string;
-  updated_at: string;
-}
 
 const UPDATABLE_TASK_COLUMNS: Record<keyof TaskUpdates, string> = {
   title: "title",
@@ -121,7 +105,7 @@ export class TaskRepository {
   findById(id: string): Task | undefined {
     const row = this.db.prepare("SELECT * FROM tasks WHERE id = ?").get(id) as TaskRow | undefined;
     if (!row) return undefined;
-    return this.rowToTask(row);
+    return rowToTask(row);
   }
 
   findAll(filters?: TaskFilters): Task[] {
@@ -159,7 +143,7 @@ export class TaskRepository {
       LIMIT 1000`;
 
     const rows = this.db.prepare(sql).all(...params) as TaskRow[];
-    return rows.map((row) => this.rowToTask(row));
+    return rows.map(rowToTask);
   }
 
   update(id: string, updates: TaskUpdates): Task {
@@ -284,7 +268,7 @@ export class TaskRepository {
       )
       .all(taskId) as TaskRow[];
 
-    return rows.map((row) => this.rowToTask(row));
+    return rows.map(rowToTask);
   }
 
   getDependents(taskId: string): Task[] {
@@ -296,7 +280,7 @@ export class TaskRepository {
       )
       .all(taskId) as TaskRow[];
 
-    return rows.map((row) => this.rowToTask(row));
+    return rows.map(rowToTask);
   }
 
   getAllDependencyEdges(): { taskId: string; dependsOnId: string }[] {
@@ -315,24 +299,5 @@ export class TaskRepository {
     if (result.changes === 0) {
       throw new NotFoundError("Task", id);
     }
-  }
-
-  private rowToTask(row: TaskRow): Task {
-    return {
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      duration: row.duration,
-      deadline: row.deadline,
-      priority: row.priority as TaskPriority,
-      status: row.status as TaskStatus,
-      category: row.category,
-      tags: JSON.parse(row.tags) as string[],
-      isRecurring: !!row.is_recurring,
-      recurrenceTemplateId: row.recurrence_template_id,
-      actualDuration: row.actual_duration,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
   }
 }
