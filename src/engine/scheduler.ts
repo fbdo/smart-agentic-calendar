@@ -243,6 +243,16 @@ interface TaskPlacement {
   unscheduledMinutes: number;
 }
 
+interface SchedulingInputs {
+  allTasks: Task[];
+  pendingTasks: Task[];
+  events: Event[];
+  pinnedBlocks: TimeBlock[];
+  dependencies: DependencyEdge[];
+}
+
+type FullConfig = ReturnType<ConfigRepository["getFullConfig"]>;
+
 export class Scheduler {
   private readonly taskRepo: TaskRepository;
   private readonly eventRepo: EventRepository;
@@ -280,12 +290,54 @@ export class Scheduler {
     const config = this.configRepo.getFullConfig();
     const now = new Date();
 
-    // 1. Load inputs
+    const inputs = this.loadSchedulingInputs(start, end);
+    const slots = buildAvailabilityMap(
+      start,
+      end,
+      config.availability,
+      inputs.events,
+      inputs.pinnedBlocks,
+    );
+    const { ordered, blocked } = this.orderSchedulableTasks(
+      inputs.pendingTasks,
+      inputs.dependencies,
+    );
+    const { blocks, atRiskTasks } = this.placeAllTasks(
+      ordered,
+      slots,
+      inputs.pinnedBlocks,
+      config,
+      now,
+    );
+
+    for (const task of blocked) {
+      atRiskTasks.push({ taskId: task.id, reason: "blocked by incomplete dependencies" });
+    }
+
+    const conflicts = this.conflictDetector.detectConflicts(
+      inputs.pendingTasks,
+      blocks,
+      config.availability,
+      inputs.dependencies,
+      now,
+    );
+
+    const result = { timeBlocks: blocks, conflicts, atRiskTasks };
+
+    this.logger.info("scheduler", {
+      event: "generate_complete",
+      blocksCount: result.timeBlocks.length,
+      atRiskCount: result.atRiskTasks.length,
+    });
+
+    return result;
+  }
+
+  private loadSchedulingInputs(start: Date, end: Date): SchedulingInputs {
     const allTasks = this.taskRepo.findAll();
     const pendingTasks = allTasks.filter((t) => ACTIVE_TASK_STATUSES.includes(t.status));
     const events = this.eventRepo.findInRange(start.toISOString(), end.toISOString());
 
-    // Get pinned blocks (completed/in-progress tasks)
     const existingBlocks = this.scheduleRepo.getSchedule(start.toISOString(), end.toISOString());
     const completedTaskIds = new Set(
       allTasks.filter((t) => t.status === "completed").map((t) => t.id),
@@ -293,33 +345,41 @@ export class Scheduler {
     const pinnedBlocks = existingBlocks.filter((b) => completedTaskIds.has(b.taskId));
 
     const pendingTaskIds = new Set(pendingTasks.map((t) => t.id));
-    const dependencies: DependencyEdge[] = this.taskRepo
+    const dependencies = this.taskRepo
       .getAllDependencyEdges()
       .filter((d) => pendingTaskIds.has(d.taskId));
 
-    // 2. Build availability map
-    const availableSlots = buildAvailabilityMap(
-      start,
-      end,
-      config.availability,
-      events,
-      pinnedBlocks,
-    );
+    return { allTasks, pendingTasks, events, pinnedBlocks, dependencies };
+  }
 
-    // 3. Filter out blocked tasks and order remaining
-    const blockedTasks = this.dependencyResolver.getBlockedTasks(pendingTasks, dependencies);
-    const blockedIds = new Set(blockedTasks.map((t) => t.id));
-    const schedulableTasks = pendingTasks.filter((t) => !blockedIds.has(t.id));
+  private orderSchedulableTasks(
+    pendingTasks: Task[],
+    dependencies: DependencyEdge[],
+  ): { ordered: Task[]; blocked: Task[] } {
+    const blocked = this.dependencyResolver.getBlockedTasks(pendingTasks, dependencies);
+    const blockedIds = new Set(blocked.map((t) => t.id));
+    const schedulable = pendingTasks.filter((t) => !blockedIds.has(t.id));
 
-    const schedulableIds = new Set(schedulableTasks.map((t) => t.id));
-    const orderedTasks = this.dependencyResolver.topologicalSort(
-      schedulableTasks,
+    const schedulableIds = new Set(schedulable.map((t) => t.id));
+    const ordered = this.dependencyResolver.topologicalSort(
+      schedulable,
       dependencies.filter((d) => schedulableIds.has(d.taskId) && schedulableIds.has(d.dependsOnId)),
     );
 
-    // 4. Place each task
+    return { ordered, blocked };
+  }
+
+  private placeAllTasks(
+    orderedTasks: Task[],
+    slots: AvailableSlot[],
+    pinnedBlocks: TimeBlock[],
+    config: FullConfig,
+    now: Date,
+  ): { blocks: TimeBlock[]; atRiskTasks: AtRiskTask[] } {
+    // Seed with pinned blocks so placeTask sees them for buffer scoring,
+    // then strip them back out before returning.
     const allTimeBlocks: TimeBlock[] = [...pinnedBlocks];
-    const remainingSlots = [...availableSlots];
+    const remainingSlots = [...slots];
     const atRiskTasks: AtRiskTask[] = [];
 
     for (const task of orderedTasks) {
@@ -337,7 +397,6 @@ export class Scheduler {
 
       allTimeBlocks.push(...placement.blocks);
 
-      // Remove used slot space
       for (const block of placement.blocks) {
         consumeSlotSpace(remainingSlots, block);
       }
@@ -350,37 +409,10 @@ export class Scheduler {
       }
     }
 
-    // Add blocked tasks as at-risk
-    for (const task of blockedTasks) {
-      atRiskTasks.push({
-        taskId: task.id,
-        reason: "blocked by incomplete dependencies",
-      });
-    }
-
-    // 5. Run conflict detection
-    const newBlocks = allTimeBlocks.filter((b) => !pinnedBlocks.includes(b));
-    const conflicts = this.conflictDetector.detectConflicts(
-      pendingTasks,
-      newBlocks,
-      config.availability,
-      dependencies,
-      now,
-    );
-
-    const result = {
-      timeBlocks: allTimeBlocks.filter((b) => !pinnedBlocks.includes(b)),
-      conflicts,
+    return {
+      blocks: allTimeBlocks.filter((b) => !pinnedBlocks.includes(b)),
       atRiskTasks,
     };
-
-    this.logger.info("scheduler", {
-      event: "generate_complete",
-      blocksCount: result.timeBlocks.length,
-      atRiskCount: result.atRiskTasks.length,
-    });
-
-    return result;
   }
 }
 
