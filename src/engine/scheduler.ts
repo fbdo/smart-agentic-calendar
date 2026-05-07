@@ -399,6 +399,67 @@ function adjustForTrailingBlock(
   return blockDuration;
 }
 
+interface SlotAllocation {
+  slot: AvailableSlot;
+  durationMinutes: number;
+}
+
+function selectSlotsForTask(
+  task: Task,
+  availableSlots: AvailableSlot[],
+  scoringCtx: ScoringContext,
+  minimumBlockMinutes: number,
+  focusMinimumBlockMinutes: number,
+): { allocations: SlotAllocation[]; unscheduledMinutes: number } {
+  const scoredSlots = availableSlots
+    .filter((s) => s.durationMinutes >= minimumBlockMinutes)
+    .map((slot) => scoreSlot(task, slot, scoringCtx))
+    .sort((a, b) => b.totalScore - a.totalScore);
+
+  const isFocusTask = task.tags.some((t) => FOCUS_TAGS.includes(t.toLowerCase()));
+
+  const allocations: SlotAllocation[] = [];
+  let remainingMinutes = task.duration;
+
+  for (const scored of scoredSlots) {
+    if (remainingMinutes <= 0) break;
+
+    const slot = scored.slot;
+
+    // Focus fragmentation prevention: don't place short non-focus tasks in focus blocks
+    if (!isFocusTask && isSlotInFocusBlock(slot, scoringCtx.focusTime)) {
+      if (task.duration < focusMinimumBlockMinutes) {
+        continue;
+      }
+    }
+
+    const rawDuration = Math.min(remainingMinutes, slot.durationMinutes);
+    const blockDuration = adjustForTrailingBlock(
+      rawDuration,
+      remainingMinutes,
+      minimumBlockMinutes,
+    );
+
+    allocations.push({ slot, durationMinutes: blockDuration });
+    remainingMinutes -= blockDuration;
+  }
+
+  return { allocations, unscheduledMinutes: Math.max(0, remainingMinutes) };
+}
+
+function emitBlocksForTask(taskId: string, allocations: SlotAllocation[]): TimeBlock[] {
+  const totalBlocks = allocations.length;
+  return allocations.map((alloc, blockIndex) => ({
+    id: generateId(),
+    taskId,
+    startTime: alloc.slot.startTime,
+    endTime: addMinutes(alloc.slot.startTime, alloc.durationMinutes),
+    date: alloc.slot.date,
+    blockIndex,
+    totalBlocks,
+  }));
+}
+
 export function placeTask(
   task: Task,
   availableSlots: AvailableSlot[],
@@ -410,10 +471,6 @@ export function placeTask(
   minimumBlockMinutes: number,
   focusMinimumBlockMinutes: number,
 ): TaskPlacement {
-  let remainingMinutes = task.duration;
-  const blocks: TimeBlock[] = [];
-  let blockIndex = 0;
-
   const scoringCtx: ScoringContext = {
     now,
     focusTime,
@@ -422,56 +479,18 @@ export function placeTask(
     bufferTimeMinutes,
   };
 
-  // Score all available slots
-  const scoredSlots = availableSlots
-    .filter((s) => s.durationMinutes >= minimumBlockMinutes)
-    .map((slot) => scoreSlot(task, slot, scoringCtx))
-    .sort((a, b) => b.totalScore - a.totalScore);
-
-  // Apply focus time fragmentation prevention
-  const isFocusTask = task.tags.some((t) => FOCUS_TAGS.includes(t.toLowerCase()));
-
-  for (const scored of scoredSlots) {
-    if (remainingMinutes <= 0) break;
-
-    const slot = scored.slot;
-
-    // Focus fragmentation prevention: don't place short non-focus tasks in focus blocks
-    if (!isFocusTask && isSlotInFocusBlock(slot, focusTime)) {
-      if (task.duration < focusMinimumBlockMinutes) {
-        continue; // Skip focus block for short non-focus tasks
-      }
-    }
-
-    const rawDuration = Math.min(remainingMinutes, slot.durationMinutes);
-    const blockDuration = adjustForTrailingBlock(
-      rawDuration,
-      remainingMinutes,
-      minimumBlockMinutes,
-    );
-
-    blocks.push({
-      id: generateId(),
-      taskId: task.id,
-      startTime: slot.startTime,
-      endTime: addMinutes(slot.startTime, blockDuration),
-      date: slot.date,
-      blockIndex,
-      totalBlocks: 0,
-    });
-
-    remainingMinutes -= blockDuration;
-    blockIndex++;
-  }
-
-  for (const block of blocks) {
-    block.totalBlocks = blocks.length;
-  }
+  const { allocations, unscheduledMinutes } = selectSlotsForTask(
+    task,
+    availableSlots,
+    scoringCtx,
+    minimumBlockMinutes,
+    focusMinimumBlockMinutes,
+  );
 
   return {
     taskId: task.id,
-    blocks,
-    unscheduledMinutes: Math.max(0, remainingMinutes),
+    blocks: emitBlocksForTask(task.id, allocations),
+    unscheduledMinutes,
   };
 }
 
