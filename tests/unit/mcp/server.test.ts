@@ -7,6 +7,7 @@ import type { EventTools } from "../../../src/mcp/tools/event-tools.js";
 import type { ScheduleTools } from "../../../src/mcp/tools/schedule-tools.js";
 import type { AnalyticsTools } from "../../../src/mcp/tools/analytics-tools.js";
 import type { ConfigTools } from "../../../src/mcp/tools/config-tools.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 
 function createToolMocks() {
   const taskTools = {
@@ -85,6 +86,96 @@ describe("McpServer", () => {
     expect(toolNames).toContain("set_focus_time");
     expect(toolNames).toContain("set_preferences");
     expect(toolNames).toContain("get_preferences");
+  });
+
+  describe("tool annotations", () => {
+    function getAnnotations(server: McpServer): Record<string, ToolAnnotations> {
+      const sdk = (
+        server as unknown as {
+          sdkServer: { _registeredTools: Record<string, { annotations?: ToolAnnotations }> };
+        }
+      ).sdkServer;
+      const out: Record<string, ToolAnnotations> = {};
+      for (const [name, tool] of Object.entries(sdk._registeredTools)) {
+        out[name] = tool.annotations ?? {};
+      }
+      return out;
+    }
+
+    function buildServer(): McpServer {
+      const mocks = createToolMocks();
+      return new McpServer(
+        mocks.taskTools,
+        mocks.eventTools,
+        mocks.scheduleTools,
+        mocks.analyticsTools,
+        mocks.configTools,
+        createNoOpLogger(),
+      );
+    }
+
+    const READ_ONLY = [
+      "get_task",
+      "list_tasks",
+      "list_events",
+      "get_schedule",
+      "get_conflicts",
+      "get_productivity_stats",
+      "get_schedule_health",
+      "get_estimation_accuracy",
+      "get_time_allocation",
+      "get_preferences",
+    ];
+
+    const DESTRUCTIVE_IDEMPOTENT = [
+      "update_task",
+      "delete_task",
+      "update_event",
+      "delete_event",
+      "set_availability",
+      "set_focus_time",
+      "set_preferences",
+    ];
+
+    const ADDITIVE_NON_IDEMPOTENT = ["create_task", "create_event"];
+
+    it.each(READ_ONLY)("%s has readOnlyHint: true", (name) => {
+      const annotations = getAnnotations(buildServer());
+      expect(annotations[name].readOnlyHint).toBe(true);
+      expect(annotations[name].openWorldHint).toBe(false);
+    });
+
+    it.each(DESTRUCTIVE_IDEMPOTENT)("%s is destructive and idempotent", (name) => {
+      const annotations = getAnnotations(buildServer());
+      expect(annotations[name].readOnlyHint).toBe(false);
+      expect(annotations[name].destructiveHint).toBe(true);
+      expect(annotations[name].idempotentHint).toBe(true);
+      expect(annotations[name].openWorldHint).toBe(false);
+    });
+
+    it.each(ADDITIVE_NON_IDEMPOTENT)("%s is additive and non-idempotent", (name) => {
+      const annotations = getAnnotations(buildServer());
+      expect(annotations[name].readOnlyHint).toBe(false);
+      expect(annotations[name].destructiveHint).toBe(false);
+      expect(annotations[name].idempotentHint).toBe(false);
+      expect(annotations[name].openWorldHint).toBe(false);
+    });
+
+    it("complete_task is non-destructive and idempotent", () => {
+      const annotations = getAnnotations(buildServer());
+      expect(annotations.complete_task.readOnlyHint).toBe(false);
+      expect(annotations.complete_task.destructiveHint).toBe(false);
+      expect(annotations.complete_task.idempotentHint).toBe(true);
+      expect(annotations.complete_task.openWorldHint).toBe(false);
+    });
+
+    it("replan is non-destructive and idempotent", () => {
+      const annotations = getAnnotations(buildServer());
+      expect(annotations.replan.readOnlyHint).toBe(false);
+      expect(annotations.replan.destructiveHint).toBe(false);
+      expect(annotations.replan.idempotentHint).toBe(true);
+      expect(annotations.replan.openWorldHint).toBe(false);
+    });
   });
 });
 

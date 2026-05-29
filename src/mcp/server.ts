@@ -8,7 +8,7 @@ import type { EventTools } from "./tools/event-tools.js";
 import type { ScheduleTools } from "./tools/schedule-tools.js";
 import type { AnalyticsTools } from "./tools/analytics-tools.js";
 import type { ConfigTools } from "./tools/config-tools.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 
 function createMcpTransport(server: SdkMcpServer): LogTransport {
   return (level, logger, data) => {
@@ -120,10 +120,11 @@ export class McpServer {
     description: string,
     inputSchema: z.ZodObject<z.ZodRawShape>,
     handler: (input: Record<string, unknown>) => unknown,
+    annotations: ToolAnnotations,
   ): void {
     this.toolNames.push(name);
     const wrapped = wrapToolHandler(handler, name, this.logger);
-    this.sdkServer.registerTool(name, { description, inputSchema }, async (args) => {
+    this.sdkServer.registerTool(name, { description, inputSchema, annotations }, async (args) => {
       return wrapped(args as Record<string, unknown>);
     });
   }
@@ -136,6 +137,7 @@ export class McpServer {
         task_id: z.string().describe(TASK_ID_DESCRIPTION),
       }),
       (input) => t.getTask(input as { task_id: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
 
     this.registerTool(
@@ -162,6 +164,12 @@ export class McpServer {
           .describe("Task IDs this task depends on (optional)"),
       }),
       (input) => t.createTask(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -185,6 +193,12 @@ export class McpServer {
         blocked_by: z.array(z.string()).optional(),
       }),
       (input) => t.updateTask(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -198,6 +212,12 @@ export class McpServer {
           .describe("Actual time spent in minutes (optional, defaults to estimated)"),
       }),
       (input) => t.completeTask(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -207,6 +227,12 @@ export class McpServer {
         task_id: z.string().describe(TASK_ID_DESCRIPTION),
       }),
       (input) => t.deleteTask(input as { task_id: string }),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -226,6 +252,7 @@ export class McpServer {
         category: z.string().optional(),
       }),
       (input) => t.listTasks(input),
+      { readOnlyHint: true, openWorldHint: false },
     );
   }
 
@@ -251,6 +278,12 @@ export class McpServer {
         date: z.string().optional().describe("YYYY-MM-DD date (required for all-day)"),
       }),
       (input) => e.createEvent(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -271,6 +304,12 @@ export class McpServer {
         date: z.string().optional().describe("YYYY-MM-DD format, e.g. 2026-06-01"),
       }),
       (input) => e.updateEvent(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -280,6 +319,12 @@ export class McpServer {
         event_id: z.string().describe("Event ID (required)"),
       }),
       (input) => e.deleteEvent(input as { event_id: string }),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -292,6 +337,7 @@ export class McpServer {
         end_date: z.string().describe("End date in YYYY-MM-DD format, e.g. 2026-06-07 (required)"),
       }),
       (input) => e.listEvents(input as { start_date: string; end_date: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
   }
 
@@ -306,6 +352,7 @@ export class McpServer {
         end_date: z.string().describe("End date in YYYY-MM-DD format, e.g. 2026-06-07 (required)"),
       }),
       (input) => s.getSchedule(input as { start_date: string; end_date: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
 
     this.registerTool(
@@ -313,6 +360,12 @@ export class McpServer {
       "Trigger a synchronous replan. Waits for completion. Returns updated schedule and conflicts with schedule_status 'up_to_date'.",
       z.object({}),
       () => s.replan(),
+      {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -320,6 +373,7 @@ export class McpServer {
       "Get current scheduling conflicts. Returns conflict details with deprioritization suggestions. No replan triggered.",
       z.object({}),
       () => s.getConflicts(),
+      { readOnlyHint: true, openWorldHint: false },
     );
   }
 
@@ -329,6 +383,7 @@ export class McpServer {
       "Get task completion and on-time rates for a period. No replan triggered.",
       z.object({ period: PERIOD_SCHEMA }),
       (input) => a.getProductivityStats(input as { period: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
 
     this.registerTool(
@@ -336,6 +391,7 @@ export class McpServer {
       "Get schedule health score, utilization, and risk indicators. No replan triggered.",
       z.object({}),
       () => a.getScheduleHealth(),
+      { readOnlyHint: true, openWorldHint: false },
     );
 
     this.registerTool(
@@ -343,6 +399,7 @@ export class McpServer {
       "Get estimation accuracy metrics comparing estimated vs actual durations. No replan triggered.",
       z.object({ period: PERIOD_SCHEMA }),
       (input) => a.getEstimationAccuracy(input as { period: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
 
     this.registerTool(
@@ -350,6 +407,7 @@ export class McpServer {
       "Get time allocation by category for a period. No replan triggered.",
       z.object({ period: PERIOD_SCHEMA }),
       (input) => a.getTimeAllocation(input as { period: string }),
+      { readOnlyHint: true, openWorldHint: false },
     );
   }
 
@@ -370,6 +428,12 @@ export class McpServer {
         c.setAvailability(
           input as { windows: { day: number; start_time: string; end_time: string }[] },
         ),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -386,6 +450,12 @@ export class McpServer {
             minimum_block_minutes?: number;
           },
         ),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -399,6 +469,12 @@ export class McpServer {
         minimum_block_minutes: z.number().optional().describe("Min task block (15-120)"),
       }),
       (input) => c.setPreferences(input),
+      {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
     );
 
     this.registerTool(
@@ -406,6 +482,7 @@ export class McpServer {
       "Get full configuration including availability, focus time, and scheduling preferences. No replan triggered.",
       z.object({}),
       () => c.getPreferences(),
+      { readOnlyHint: true, openWorldHint: false },
     );
   }
 }
