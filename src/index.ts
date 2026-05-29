@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import path from "node:path";
 import { Database } from "./storage/database.js";
 import { TaskRepository } from "./storage/task-repository.js";
 import { EventRepository } from "./storage/event-repository.js";
@@ -34,13 +33,6 @@ export function getDbPath(): string {
   const dbPath = process.env.CALENDAR_DB_PATH ?? "./calendar.db";
   if (!dbPath) {
     throw new Error("CALENDAR_DB_PATH must not be empty");
-  }
-  if (dbPath.includes("..")) {
-    throw new Error("CALENDAR_DB_PATH must not contain path traversal sequences (..)");
-  }
-  const resolved = path.resolve(dbPath);
-  if (!resolved.startsWith(process.cwd())) {
-    throw new Error("CALENDAR_DB_PATH must be within the working directory");
   }
   return dbPath;
 }

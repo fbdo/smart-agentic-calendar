@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import os from "node:os";
+import path from "node:path";
 import { createApp, getDbPath } from "../../../src/index.js";
 
 describe("Composition root", () => {
@@ -41,11 +43,26 @@ describe("Composition root", () => {
     }
   });
 
-  it("getDbPath rejects path traversal sequences", () => {
+  it("getDbPath accepts absolute paths outside the working directory", () => {
     const original = process.env.CALENDAR_DB_PATH;
-    process.env.CALENDAR_DB_PATH = "/some/path/../../etc/calendar.db";
+    const absolutePath = path.join(os.tmpdir(), "smart-agentic-calendar-test.db");
+    process.env.CALENDAR_DB_PATH = absolutePath;
     try {
-      expect(() => getDbPath()).toThrow();
+      expect(getDbPath()).toBe(absolutePath);
+    } finally {
+      if (original !== undefined) {
+        process.env.CALENDAR_DB_PATH = original;
+      } else {
+        delete process.env.CALENDAR_DB_PATH;
+      }
+    }
+  });
+
+  it("getDbPath accepts paths containing '..' segments", () => {
+    const original = process.env.CALENDAR_DB_PATH;
+    process.env.CALENDAR_DB_PATH = "./data/../calendar.db";
+    try {
+      expect(getDbPath()).toBe("./data/../calendar.db");
     } finally {
       if (original !== undefined) {
         process.env.CALENDAR_DB_PATH = original;
